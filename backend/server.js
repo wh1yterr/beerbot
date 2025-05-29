@@ -2,13 +2,14 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 
 // Подключение к PostgreSQL
@@ -28,9 +29,24 @@ pool.on('error', (err) => {
     console.error('PostgreSQL connection error:', err.stack);
 });
 
-// Передаем pool в маршруты
-const beersRoutes = require('./src/routes/beersRoutes')(pool);
-app.use('/api/products', beersRoutes);
+// Middleware для проверки JWT
+const authenticateToken = (req, res, next) => {
+    const token = req.header('Authorization')?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Access denied' });
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ message: 'Invalid token' });
+        req.user = user;
+        next();
+    });
+};
+
+// Маршруты
+const productsRoutes = require('./src/routes/productsRoutes')(pool);
+const authRoutes = require('./src/routes/authRoutes')(pool);
+
+app.use('/api/products', authenticateToken, productsRoutes); // Защищенные маршруты
+app.use('/api/auth', authRoutes); // Маршруты для аутентификации
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;

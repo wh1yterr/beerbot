@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button, Container, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -16,10 +17,13 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); // Очистка предыдущих ошибок
+
     if (password !== confirmPassword) {
       setError('Пароли не совпадают');
       return;
     }
+
     try {
       const registerData = {
         email,
@@ -28,14 +32,19 @@ const Register = () => {
         organizationName,
         inn,
         egaisNumber,
-        phone
+        phone,
       };
-      console.log('Register data:', registerData);
 
-      // Тут должна быть логика отправки данных на backend
+      const response = await axios.post('http://localhost:5000/api/auth/register', registerData);
+      console.log('Registration response:', response.data);
       navigate('/login');
     } catch (err) {
-      setError(err.message);
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || 'Ошибка регистрации');
+      } else {
+        setError('Ошибка сервера');
+      }
+      console.error('Registration error:', err);
     }
   };
 

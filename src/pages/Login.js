@@ -1,6 +1,7 @@
-import React, {useState, Component} from "react";
+import React, { useState } from "react";
 import { Form, Button, Container, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -10,12 +11,23 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); // Очистка предыдущих ошибок
+
     try {
-      // Здесь будет логика авторизации
-      console.log('Login data:', { email, password });
-      navigate('/'); // Перенаправление после успешного входа
+      const loginData = { email, password };
+      const response = await axios.post('http://localhost:5000/api/auth/login', loginData);
+      console.log('Login response:', response.data);
+
+      // Сохранение токена в localStorage
+      localStorage.setItem('token', response.data.token);
+      navigate('/profile'); // Перенаправление на страницу профиля после входа
     } catch (err) {
-      setError(err.message);
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || 'Ошибка авторизации');
+      } else {
+        setError('Ошибка сервера');
+      }
+      console.error('Login error:', err);
     }
   };
 
