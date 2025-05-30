@@ -13,45 +13,44 @@ app.use(cors({ origin: 'https://beerbot-hazel.vercel.app' }));
 app.use(express.json());
 app.use('/images', express.static('public/images'));
 
-// Подключение к PostgreSQL
+// Подключение к PostgreSQL с использованием DATABASE_URL
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // Для теста, в продакшене лучше использовать сертификаты Supabase
+  },
 });
 
 pool.on('connect', () => {
-    console.log('Successfully connected to PostgreSQL');
+  console.log('Successfully connected to PostgreSQL');
 });
 
 pool.on('error', (err) => {
-    console.error('PostgreSQL connection error:', err.stack);
+  console.error('PostgreSQL connection error:', err.stack);
 });
 
 // Middleware для проверки JWT
 const authenticateToken = (req, res, next) => {
-    const token = req.header('Authorization')?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'Access denied' });
+  const token = req.header('Authorization')?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Access denied' });
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ message: 'Invalid token' });
-        req.user = user;
-        next();
-    });
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid token' });
+    req.user = user;
+    next();
+  });
 };
 
 // Маршруты
 const productsRoutes = require('./src/routes/productsRoutes')(pool);
 const authRoutes = require('./src/routes/authRoutes')(pool);
 const cartRoutes = require('./src/routes/cartRoutes')(pool);
-const ordersRoutes = require('./src/routes/ordersRoutes')(pool); // Должна быть эта строка
+const ordersRoutes = require('./src/routes/ordersRoutes')(pool);
 
 app.use('/api/products', authenticateToken, productsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', authenticateToken, cartRoutes);
-app.use('/api/orders', authenticateToken, ordersRoutes); // Должна быть эта строка
+app.use('/api/orders', authenticateToken, ordersRoutes);
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;
