@@ -1,6 +1,5 @@
+// src/routes/productsRoutes.js
 const express = require('express');
-const router = express.Router();
-const { Pool } = require('pg');
 
 module.exports = (pool) => {
     const router = express.Router();
@@ -20,11 +19,11 @@ module.exports = (pool) => {
 
     // Добавить новый продукт
     router.post('/', async (req, res) => {
-        const { name, type, alcohol, description, image } = req.body;
+        const { name, type, alcohol, description, image, price } = req.body;
         try {
             const result = await pool.query(
-                'INSERT INTO products (name, type, alcohol, description, image) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-                [name, type, alcohol, description, image]
+                'INSERT INTO products (name, type, alcohol, description, image, price) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+                [name, type, alcohol, description, image, price]
             );
             res.status(201).json(result.rows[0]);
         } catch (err) {

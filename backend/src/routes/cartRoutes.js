@@ -1,3 +1,4 @@
+// src/routes/cartRoutes.js
 const express = require('express');
 
 module.exports = (pool) => {
@@ -6,11 +7,11 @@ module.exports = (pool) => {
   // Middleware для проверки токена
   router.use((req, res, next) => {
     const token = req.header('Authorization')?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'Access denied' });
+    if (!token) return res.status(401).json({ message: 'Доступ запрещён' });
 
     const jwt = require('jsonwebtoken');
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ message: 'Invalid token' });
+      if (err) return res.status(403).json({ message: 'Недействительный токен' });
       req.user = user;
       next();
     });
@@ -21,7 +22,7 @@ module.exports = (pool) => {
     try {
       const token = req.user;
       const result = await pool.query(
-        `SELECT p.id, p.name, p.type, p.alcohol 
+        `SELECT c.id, c.quantity, p.id AS product_id, p.name, p.description, p.price, p.image
          FROM cart c 
          JOIN products p ON c.product_id = p.id 
          WHERE c.user_id = $1`,
@@ -29,7 +30,7 @@ module.exports = (pool) => {
       );
       res.json(result.rows);
     } catch (err) {
-      console.error('Error in query:', err.stack);
+      console.error('Ошибка запроса:', err.stack);
       res.status(500).json({ message: err.message });
     }
   });
@@ -38,17 +39,18 @@ module.exports = (pool) => {
   router.post('/', async (req, res) => {
     try {
       const token = req.user;
-      const { productId } = req.body;
+      const { productId, quantity = 1 } = req.body; // quantity по умолчанию 1
       const result = await pool.query(
-        'INSERT INTO cart (user_id, product_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *',
-        [token.id, productId]
+        `INSERT INTO cart (user_id, product_id, quantity) 
+         VALUES ($1, $2, $3) 
+         ON CONFLICT (user_id, product_id) 
+         DO UPDATE SET quantity = cart.quantity + $3 
+         RETURNING *`,
+        [token.id, productId, quantity]
       );
-      if (result.rowCount === 0) {
-        return res.status(400).json({ message: 'Товар уже в корзине' });
-      }
-      res.status(201).json({ message: 'Товар добавлен в корзину' });
+      res.status(201).json({ message: 'Товар добавлен в корзину', item: result.rows[0] });
     } catch (err) {
-      console.error('Error in query:', err.stack);
+      console.error('Ошибка запроса:', err.stack);
       res.status(500).json({ message: err.message });
     }
   });
@@ -62,9 +64,9 @@ module.exports = (pool) => {
         'DELETE FROM cart WHERE id = $1 AND user_id = $2',
         [id, token.id]
       );
-      res.json({ message: 'Товар удален из корзины' });
+      res.json({ message: 'Товар удалён из корзины' });
     } catch (err) {
-      console.error('Error in query:', err.stack);
+      console.error('Ошибка запроса:', err.stack);
       res.status(500).json({ message: err.message });
     }
   });

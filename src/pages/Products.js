@@ -1,50 +1,78 @@
-import React from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
-
-const products = [
-  {
-    id: 1,
-    name: 'Hell/Хелль',
-    description: 'Светлое, фильтрованное пиво. Типичное баварское пиво, гармоничное, ароматное для любителей беззаботного наслаждения мягким вкусом пива.4,5% алк.  ',
-    price: '9500₽ за кегу объемом 20 литров',
-    image: '../hell.png',
-  },
-  {
-    id: 2,
-    name: 'Pils/Пилс',
-    description: 'Светлое, нефильтрованное пиво. Богатый и натуральный аромат хмеля из местечка Халлертау придаёт этому пиву особую нотку.4,5% алк. ',
-    price: '10000₽ за кегу объемом 20 литров',
-    image: '../pils.png',
-  },
-  {
-    id: 3,
-    name: 'Waizen/Вайцен',
-    description: 'Светлое, нефильтрованное пиво. Баварские пивные дрожжи и высокое содержание пшеничного солода делают это пиво настоящим произведением.4.5% алк.',
-    price: '11000₽ за кегу объемом 20 литров',
-    image: '../waizen.png',
-  },
-  {
-    id: 4,
-    name: 'Dunkel/Дункель',
-    description: 'Тёмное, нефильтрованное пиво. Подчёркнутый аромат солода и гармоничный характер этого пива придает ему особый своеобразный вкус. 4,1% алк.  ',
-    price: '9000₽ за кегу объемом 20 литров',
-    image: '../dunkel.png',
-  },
-  {
-    id: 5,
-    name: 'Kraft/Крафт',
-    description: 'Темное нефильтрованное неосветленное. Пиво верхового брожения из специально подобранных солодов. Имеет аромат грейпфруто-цитрусовых оттенков.4,7% алк. ',
-    price: '12000₽ за кегу объемом 20 литров',
-    image: '../kraft.png',
-  },
-
-
-];
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Button, Alert, Form } from 'react-bootstrap';
+import axios from 'axios';
 
 const Products = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [quantities, setQuantities] = useState({}); // Для хранения количества для каждого продукта
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Требуется авторизация');
+        }
+
+        const response = await axios.get('http://localhost:5000/api/products', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setProducts(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError('Ошибка при загрузке продуктов');
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleQuantityChange = (productId, value) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [productId]: value > 0 ? value : 1, // Минимальное количество 1
+    }));
+  };
+
+  const addToCart = async (productId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Требуется авторизация');
+        setSuccess('');
+        return;
+      }
+
+      const quantity = quantities[productId] || 1; // По умолчанию 1
+      const response = await axios.post(
+        'http://localhost:5000/api/cart',
+        { productId, quantity },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setSuccess(response.data.message);
+      setError('');
+      setQuantities((prev) => ({ ...prev, [productId]: 1 })); // Сброс количества после добавления
+    } catch (err) {
+      setError(err.response?.data?.message || 'Ошибка при добавлении в корзину');
+      setSuccess('');
+      console.error('Ошибка добавления в корзину:', err);
+    }
+  };
+
+  if (loading) return <div>Загрузка...</div>;
+  if (error && !success) return <div>Ошибка: {error}</div>;
+
   return (
     <Container className="mt-5">
       <h2 className="text-center mb-4">Наши продукты</h2>
+      {error && <Alert variant="danger">{error}</Alert>}
+      {success && <Alert variant="success">{success}</Alert>}
       <Row>
         {products.map((product) => (
           <Col key={product.id} md={6} lg={4} className="mb-4">
@@ -54,6 +82,22 @@ const Products = () => {
                 <Card.Title>{product.name}</Card.Title>
                 <Card.Text>{product.description}</Card.Text>
                 <Card.Text className="text-muted">{product.price}</Card.Text>
+                <Form.Group className="mb-3">
+                  <Form.Label>Количество</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="1"
+                    value={quantities[product.id] || 1}
+                    onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value))}
+                    style={{ width: '100px' }}
+                  />
+                </Form.Group>
+                <Button
+                  variant="primary"
+                  onClick={() => addToCart(product.id)}
+                >
+                  Добавить в корзину
+                </Button>
               </Card.Body>
             </Card>
           </Col>

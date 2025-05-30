@@ -11,6 +11,7 @@ const app = express();
 // Middleware
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
+app.use('/images', express.static('public/images'));
 
 // Подключение к PostgreSQL
 const pool = new Pool({
@@ -44,9 +45,13 @@ const authenticateToken = (req, res, next) => {
 // Маршруты
 const productsRoutes = require('./src/routes/productsRoutes')(pool);
 const authRoutes = require('./src/routes/authRoutes')(pool);
+const cartRoutes = require('./src/routes/cartRoutes')(pool); // Добавьте эту строку
+const ordersRoutes = require('./src/routes/ordersRoutes')(pool); // Подключение ordersRoutes
 
 app.use('/api/products', authenticateToken, productsRoutes); // Защищенные маршруты
 app.use('/api/auth', authRoutes); // Маршруты для аутентификации
+app.use('/api/cart', authenticateToken, cartRoutes); // Добавьте эту строку
+app.use('/api/orders', authenticateToken, ordersRoutes); // Маршрут для заказов
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;

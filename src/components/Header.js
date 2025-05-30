@@ -37,6 +37,7 @@ const Header = () => {
             {!isAuthenticated && <Nav.Link href="/register">Регистрация</Nav.Link>}
             <Nav.Link href="/products">Продукты</Nav.Link>
             {isAuthenticated && <Nav.Link href="/profile">Профиль</Nav.Link>}
+            {isAuthenticated && <Nav.Link href="/cart">Корзина</Nav.Link>}
             <Nav.Link href="/terms">Пользовательское соглашение</Nav.Link>
           </Nav>
           {isAuthenticated && (
