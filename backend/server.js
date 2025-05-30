@@ -17,10 +17,10 @@ app.use('/images', express.static('public/images'));
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Игнорировать самоподписанные сертификаты для теста
-    require: true, // Требовать SSL
+    rejectUnauthorized: false,
+    require: true,
   },
-  family: 4, // Принудительное использование IPv4
+  family: 4,
 });
 
 pool.on('connect', () => {
@@ -54,6 +54,12 @@ app.use('/api/auth', authRoutes(pool));
 app.use('/api/cart', authenticateToken, cartRoutes(pool));
 app.use('/api/orders', authenticateToken, ordersRoutes(pool));
 
+// Обработка ошибок
+app.use((err, req, res, next) => {
+  console.error('Server error:', err.stack);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
 // Запуск сервера
-const PORT = process.env.PORT || 5000; // Используем порт из окружения или 5000 по умолчанию
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT} at`, new Date().toISOString()));

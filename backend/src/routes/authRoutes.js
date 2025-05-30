@@ -37,6 +37,7 @@ module.exports = (pool) => {
 
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
+      console.log('Hashed password:', hashedPassword);
       const result = await pool.query(
         'INSERT INTO users (email, password, contact_face, organization_name, inn, egais_number, phone, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
         [email, hashedPassword, contactFace, organizationName, inn, egaisNumber, phone, 'user']
