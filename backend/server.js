@@ -13,13 +13,14 @@ app.use(cors({ origin: 'https://beerbot-hazel.vercel.app' }));
 app.use(express.json());
 app.use('/images', express.static('public/images'));
 
-// Подключение к PostgreSQL с использованием DATABASE_URL
+// Подключение к PostgreSQL с использованием pg
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false, // Игнорировать самоподписанные сертификаты для теста
     require: true, // Требовать SSL
   },
+  family: 4, // Принудительное использование IPv4
 });
 
 pool.on('connect', () => {
@@ -43,16 +44,16 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Маршруты
-const productsRoutes = require('./src/routes/productsRoutes')(pool);
-const authRoutes = require('./src/routes/authRoutes')(pool);
-const cartRoutes = require('./src/routes/cartRoutes')(pool);
-const ordersRoutes = require('./src/routes/ordersRoutes')(pool);
+const productsRoutes = require('./src/routes/productsRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const cartRoutes = require('./src/routes/cartRoutes');
+const ordersRoutes = require('./src/routes/ordersRoutes');
 
-app.use('/api/products', authenticateToken, productsRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/cart', authenticateToken, cartRoutes);
-app.use('/api/orders', authenticateToken, ordersRoutes);
+app.use('/api/products', authenticateToken, productsRoutes(pool));
+app.use('/api/auth', authRoutes(pool));
+app.use('/api/cart', authenticateToken, cartRoutes(pool));
+app.use('/api/orders', authenticateToken, ordersRoutes(pool));
 
 // Запуск сервера
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000; // Используем порт из окружения или 5000 по умолчанию
 app.listen(PORT, () => console.log(`Server running on port ${PORT} at`, new Date().toISOString()));
