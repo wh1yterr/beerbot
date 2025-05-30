@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Button, Alert, Image } from "react-bootstrap";
+import { Container, Table, Button, Image } from "react-bootstrap";
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -19,7 +18,7 @@ const Cart = () => {
         console.log('Данные корзины:', response.data);
         setCartItems(response.data);
       } catch (err) {
-        setError('Ошибка загрузки корзины');
+        toast.error('Ошибка загрузки корзины');
         console.error('Ошибка загрузки корзины:', err.response || err);
       }
     };
@@ -33,37 +32,69 @@ const Cart = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCartItems(cartItems.filter(item => item.id !== itemId));
-      setSuccess('Товар удалён из корзины');
-      setError('');
+      toast.success('Товар удалён из корзины');
     } catch (err) {
-      setError('Ошибка удаления товара');
-      setSuccess('');
+      toast.error('Ошибка удаления товара');
       console.error('Ошибка удаления:', err);
     }
   };
 
-const placeOrder = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('Требуется авторизация');
+  const updateCartQuantity = async (itemId, newQuantity) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:5000/api/cart/${itemId}/quantity`,
+        { quantity: newQuantity },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    console.log('Отправка заказа:', { items: cartItems }); // Логирование
-    const response = await axios.post(
-      'http://localhost:5000/api/orders',
-      { items: cartItems },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      setCartItems(cartItems.map(item =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      ));
+      toast.success('Количество обновлено');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Ошибка обновления количества');
+      console.error('Ошибка обновления количества:', err.response || err);
+    }
+  };
 
-    setSuccess('Заказ успешно оформлен!');
-    setError('');
-    setCartItems([]);
-    console.log('Ответ сервера:', response.data); // Логирование
-  } catch (err) {
-    setError(err.response?.data?.message || 'Ошибка при оформлении заказа');
-    setSuccess('');
-    console.error('Ошибка оформления заказа:', err.response || err);
-  }
-};
+  const increaseQuantity = (itemId) => {
+    const item = cartItems.find(item => item.id === itemId);
+    if (item.quantity < item.available_quantity) {
+      updateCartQuantity(itemId, item.quantity + 1);
+    } else {
+      toast.error('Достигнут лимит доступного количества');
+    }
+  };
+
+  const decreaseQuantity = (itemId) => {
+    const item = cartItems.find(item => item.id === itemId);
+    if (item.quantity > 1) {
+      updateCartQuantity(itemId, item.quantity - 1);
+    }
+  };
+
+  const placeOrder = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Требуется авторизация');
+
+      console.log('Отправка заказа:', { items: cartItems });
+      const response = await axios.post(
+        'http://localhost:5000/api/orders',
+        { items: cartItems },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setCartItems([]);
+      toast.success('Заказ успешно оформлен!');
+      console.log('Ответ сервера:', response.data);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Ошибка при оформлении заказа');
+      console.error('Ошибка оформления заказа:', err.response || err);
+    }
+  };
+
   const calculateTotalPrice = () => {
     return cartItems.reduce((total, item) => {
       const price = typeof item.price === 'string' ? parseFloat(item.price.split('₽')[0]) : parseFloat(item.price);
@@ -71,11 +102,11 @@ const placeOrder = async () => {
     }, 0).toFixed(2);
   };
 
+  const isOrderPossible = cartItems.every(item => item.quantity <= item.available_quantity);
+
   return (
     <Container className="mt-5" style={{ maxWidth: "900px" }}>
       <h2 className="mb-4 text-center">Корзина</h2>
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
 
       {cartItems.length === 0 ? (
         <p>Корзина пуста</p>
@@ -84,7 +115,6 @@ const placeOrder = async () => {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th>Изображение</th>
                 <th>Название</th>
                 <th>Цена</th>
                 <th>Количество</th>
@@ -94,12 +124,29 @@ const placeOrder = async () => {
             <tbody>
               {cartItems.map((item) => (
                 <tr key={item.id}>
-                  <td>
-                    <Image src={item.image} alt={item.name} style={{ width: '50px', height: 'auto' }} />
-                  </td>
                   <td>{item.name}</td>
                   <td>{item.price}</td>
-                  <td>{item.quantity}</td>
+                  <td>
+                    <div className="d-flex align-items-center">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => decreaseQuantity(item.id)}
+                        disabled={item.quantity <= 1}
+                      >
+                        -
+                      </Button>
+                      <span className="mx-2">{item.quantity}</span>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => increaseQuantity(item.id)}
+                        disabled={item.quantity >= item.available_quantity}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </td>
                   <td>
                     <Button variant="danger" onClick={() => removeFromCart(item.id)}>
                       Удалить
@@ -112,9 +159,18 @@ const placeOrder = async () => {
           <div className="text-end mb-3">
             <h4>Итого: {calculateTotalPrice()} ₽</h4>
           </div>
-          <Button variant="success" onClick={placeOrder} disabled={cartItems.length === 0}>
+          <Button
+            variant="success"
+            onClick={placeOrder}
+            disabled={cartItems.length === 0 || !isOrderPossible}
+          >
             Оформить заказ
           </Button>
+          {!isOrderPossible && (
+            <div className="text-danger mt-3">
+              Нельзя оформить заказ: недостаточно товара в наличии.
+            </div>
+          )}
         </>
       )}
     </Container>

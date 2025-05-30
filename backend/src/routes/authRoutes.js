@@ -38,8 +38,8 @@ module.exports = (pool) => {
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
       const result = await pool.query(
-        'INSERT INTO users (email, password, contact_face, organization_name, inn, egais_number, phone) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-        [email, hashedPassword, contactFace, organizationName, inn, egaisNumber, phone]
+        'INSERT INTO users (email, password, contact_face, organization_name, inn, egais_number, phone, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+        [email, hashedPassword, contactFace, organizationName, inn, egaisNumber, phone, 'user'] // Добавляем role по умолчанию
       );
       res.status(201).json({ message: 'User registered', user: result.rows[0] });
     } catch (err) {
@@ -68,7 +68,11 @@ module.exports = (pool) => {
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
 
-      const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(
+        { id: user.id, email: user.email, role: user.role }, // Добавляем role в токен
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
       res.json({ message: 'Logged in', token });
     } catch (err) {
       console.error('Error in query:', err.stack);

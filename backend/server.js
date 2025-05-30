@@ -45,13 +45,13 @@ const authenticateToken = (req, res, next) => {
 // Маршруты
 const productsRoutes = require('./src/routes/productsRoutes')(pool);
 const authRoutes = require('./src/routes/authRoutes')(pool);
-const cartRoutes = require('./src/routes/cartRoutes')(pool); // Добавьте эту строку
-const ordersRoutes = require('./src/routes/ordersRoutes')(pool); // Подключение ordersRoutes
+const cartRoutes = require('./src/routes/cartRoutes')(pool);
+const ordersRoutes = require('./src/routes/ordersRoutes')(pool); // Должна быть эта строка
 
-app.use('/api/products', authenticateToken, productsRoutes); // Защищенные маршруты
-app.use('/api/auth', authRoutes); // Маршруты для аутентификации
-app.use('/api/cart', authenticateToken, cartRoutes); // Добавьте эту строку
-app.use('/api/orders', authenticateToken, ordersRoutes); // Маршрут для заказов
+app.use('/api/products', authenticateToken, productsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/cart', authenticateToken, cartRoutes);
+app.use('/api/orders', authenticateToken, ordersRoutes); // Должна быть эта строка
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;

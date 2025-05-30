@@ -1,4 +1,3 @@
-// src/routes/cartRoutes.js
 const express = require('express');
 
 module.exports = (pool) => {
@@ -22,7 +21,7 @@ module.exports = (pool) => {
     try {
       const token = req.user;
       const result = await pool.query(
-        `SELECT c.id, c.quantity, p.id AS product_id, p.name, p.description, p.price, p.image
+        `SELECT c.id, c.quantity, p.id AS product_id, p.name, p.description, p.price, p.image, p.quantity AS available_quantity
          FROM cart c 
          JOIN products p ON c.product_id = p.id 
          WHERE c.user_id = $1`,
@@ -39,7 +38,27 @@ module.exports = (pool) => {
   router.post('/', async (req, res) => {
     try {
       const token = req.user;
-      const { productId, quantity = 1 } = req.body; // quantity по умолчанию 1
+      const { productId, quantity = 1 } = req.body;
+
+      // Проверка остатка перед добавлением
+      const productResult = await pool.query(
+        'SELECT quantity FROM products WHERE id = $1',
+        [productId]
+      );
+      const availableQuantity = productResult.rows[0]?.quantity || 0;
+      const currentCartResult = await pool.query(
+        'SELECT quantity FROM cart WHERE user_id = $1 AND product_id = $2',
+        [token.id, productId]
+      );
+      const currentQuantity = currentCartResult.rows[0]?.quantity || 0;
+      const newQuantity = currentQuantity + quantity;
+
+      if (availableQuantity < newQuantity) {
+        return res.status(400).json({ 
+          message: `Недостаточно пива в наличии. Остаток: ${availableQuantity}` 
+        });
+      }
+
       const result = await pool.query(
         `INSERT INTO cart (user_id, product_id, quantity) 
          VALUES ($1, $2, $3) 
@@ -49,6 +68,56 @@ module.exports = (pool) => {
         [token.id, productId, quantity]
       );
       res.status(201).json({ message: 'Товар добавлен в корзину', item: result.rows[0] });
+    } catch (err) {
+      console.error('Ошибка запроса:', err.stack);
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Обновление количества товара в корзине
+  router.put('/:id/quantity', async (req, res) => {
+    try {
+      const token = req.user;
+      const { id } = req.params;
+      const { quantity } = req.body;
+
+      const parsedQuantity = parseInt(quantity) || 0;
+      if (parsedQuantity < 1) {
+        return res.status(400).json({ message: 'Количество должно быть больше 0' });
+      }
+
+      // Проверка остатка
+      const cartItemResult = await pool.query(
+        'SELECT product_id FROM cart WHERE id = $1 AND user_id = $2',
+        [id, token.id]
+      );
+      if (cartItemResult.rowCount === 0) {
+        return res.status(404).json({ message: 'Товар в корзине не найден' });
+      }
+
+      const productId = cartItemResult.rows[0].product_id;
+      const productResult = await pool.query(
+        'SELECT quantity FROM products WHERE id = $1',
+        [productId]
+      );
+      const availableQuantity = productResult.rows[0]?.quantity || 0;
+
+      if (parsedQuantity > availableQuantity) {
+        return res.status(400).json({ 
+          message: `Недостаточно пива в наличии. Остаток: ${availableQuantity}` 
+        });
+      }
+
+      const result = await pool.query(
+        'UPDATE cart SET quantity = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+        [parsedQuantity, id, token.id]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ message: 'Товар в корзине не найден' });
+      }
+
+      res.json({ message: 'Количество обновлено', item: result.rows[0] });
     } catch (err) {
       console.error('Ошибка запроса:', err.stack);
       res.status(500).json({ message: err.message });
