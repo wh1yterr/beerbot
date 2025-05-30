@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors({ origin: 'https://beerbot-hazel.vercel.app' }));
 app.use(express.json());
 app.use('/images', express.static('public/images'));
 
