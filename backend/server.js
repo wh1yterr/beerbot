@@ -1,8 +1,8 @@
-import express from 'express';
-import postgres from 'postgres';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+const express = require('express');
+const { Pool } = require('pg');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
@@ -13,20 +13,20 @@ app.use(cors({ origin: 'https://beerbot-hazel.vercel.app' }));
 app.use(express.json());
 app.use('/images', express.static('public/images'));
 
-// Подключение к PostgreSQL с использованием postgres.js
-const sql = postgres(process.env.DATABASE_URL, {
+// Подключение к PostgreSQL с использованием DATABASE_URL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false, // Игнорировать самоподписанные сертификаты для теста
     require: true, // Требовать SSL
   },
-  family: 4, // Принудительное использование IPv4
 });
 
-sql.on('connect', () => {
+pool.on('connect', () => {
   console.log('Successfully connected to PostgreSQL at', new Date().toISOString());
 });
 
-sql.on('error', (err) => {
+pool.on('error', (err) => {
   console.error('PostgreSQL connection error:', err.stack);
 });
 
@@ -43,15 +43,15 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Маршруты
-import productsRoutes from './src/routes/productsRoutes.js';
-import authRoutes from './src/routes/authRoutes.js';
-import cartRoutes from './src/routes/cartRoutes.js';
-import ordersRoutes from './src/routes/ordersRoutes.js';
+const productsRoutes = require('./src/routes/productsRoutes')(pool);
+const authRoutes = require('./src/routes/authRoutes')(pool);
+const cartRoutes = require('./src/routes/cartRoutes')(pool);
+const ordersRoutes = require('./src/routes/ordersRoutes')(pool);
 
-app.use('/api/products', authenticateToken, productsRoutes(sql));
-app.use('/api/auth', authRoutes(sql));
-app.use('/api/cart', authenticateToken, cartRoutes(sql));
-app.use('/api/orders', authenticateToken, ordersRoutes(sql));
+app.use('/api/products', authenticateToken, productsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/cart', authenticateToken, cartRoutes);
+app.use('/api/orders', authenticateToken, ordersRoutes);
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;
