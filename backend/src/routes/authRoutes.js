@@ -1,12 +1,12 @@
-const express = require('express');
-const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import { body, validationResult } from 'express-validator';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import express from 'express';
 
-module.exports = (pool) => {
+export default (sql) => {
   const router = express.Router();
 
-  // Middleware для проверки токена (применяется ко всем маршрутам, кроме логина и регистрации)
+  // Middleware для проверки токена
   router.use((req, res, next) => {
     if (req.path === '/login' || req.path === '/register') {
       return next();
@@ -35,19 +35,19 @@ module.exports = (pool) => {
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
     const { email, password, contactFace, organizationName, inn, egaisNumber, phone } = req.body;
+    console.log('Registration attempt:', { email, contactFace, organizationName, inn, egaisNumber, phone });
+
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
-      const result = await pool.query(
-        'INSERT INTO users (email, password, contact_face, organization_name, inn, egais_number, phone, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-        [email, hashedPassword, contactFace, organizationName, inn, egaisNumber, phone, 'user'] // Добавляем role по умолчанию
-      );
-      res.status(201).json({ message: 'User registered', user: result.rows[0] });
+      const result = await sql`
+        INSERT INTO users (email, password, contact_face, organization_name, inn, egais_number, phone, role)
+        VALUES (${email}, ${hashedPassword}, ${contactFace}, ${organizationName}, ${inn}, ${egaisNumber}, ${phone}, 'user')
+        RETURNING *`;
+      console.log('Registration successful:', result[0]);
+      res.status(201).json({ message: 'User registered', user: result[0] });
     } catch (err) {
-      if (err.code === '23505') {
-        return res.status(400).json({ message: 'Email already exists' });
-      }
       console.error('Error in query:', err.stack);
-      res.status(500).json({ message: err.message });
+      res.status(500).json({ message: 'Ошибка при регистрации', error: err.message });
     }
   });
 
@@ -61,15 +61,15 @@ module.exports = (pool) => {
 
     const { email, password } = req.body;
     try {
-      const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-      if (result.rows.length === 0) return res.status(400).json({ message: 'User not found' });
+      const result = await sql`SELECT * FROM users WHERE email = ${email}`;
+      if (result.length === 0) return res.status(400).json({ message: 'User not found' });
 
-      const user = result.rows[0];
+      const user = result[0];
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
 
       const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role }, // Добавляем role в токен
+        { id: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
       );
@@ -83,13 +83,13 @@ module.exports = (pool) => {
   // Получение данных профиля
   router.get('/profile', async (req, res) => {
     try {
-      const token = req.user; // Из middleware
-      const result = await pool.query(
-        'SELECT email, contact_face, organization_name, inn, egais_number, phone, address FROM users WHERE id = $1',
-        [token.id]
-      );
-      if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
-      res.json({ user: result.rows[0] });
+      const token = req.user;
+      const result = await sql`
+        SELECT email, contact_face, organization_name, inn, egais_number, phone, address
+        FROM users
+        WHERE id = ${token.id}`;
+      if (result.length === 0) return res.status(404).json({ message: 'User not found' });
+      res.json({ user: result[0] });
     } catch (err) {
       console.error('Error in query:', err.stack);
       res.status(500).json({ message: err.message });
@@ -99,9 +99,9 @@ module.exports = (pool) => {
   // Обновление адреса доставки
   router.put('/profile/address', async (req, res) => {
     try {
-      const token = req.user; // Из middleware
+      const token = req.user;
       const { address } = req.body;
-      await pool.query('UPDATE users SET address = $1 WHERE id = $2', [address, token.id]);
+      await sql`UPDATE users SET address = ${address} WHERE id = ${token.id}`;
       res.json({ message: 'Address updated' });
     } catch (err) {
       console.error('Error in query:', err.stack);
