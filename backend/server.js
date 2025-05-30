@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
+const DATABASE_URL = require('DATABASE_URL')
 
 dotenv.config();
 
