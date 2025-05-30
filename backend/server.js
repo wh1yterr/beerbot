@@ -3,7 +3,6 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-import postgres from 'postgres'
 
 dotenv.config();
 
