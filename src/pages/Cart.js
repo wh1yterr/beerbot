@@ -12,7 +12,7 @@ const Cart = () => {
         const token = localStorage.getItem('token');
         if (!token) throw new Error('Требуется авторизация');
 
-        const response = await axios.get('http://localhost:5000/api/cart', {
+        const response = await axios.get('https://beerbot-cfhp.onrender.com/api/cart', {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log('Данные корзины:', response.data);
@@ -28,7 +28,7 @@ const Cart = () => {
   const removeFromCart = async (itemId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/cart/${itemId}`, {
+      await axios.delete(`https://beerbot-cfhp.onrender.com/api/cart/${itemId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCartItems(cartItems.filter(item => item.id !== itemId));
@@ -43,7 +43,7 @@ const Cart = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/cart/${itemId}/quantity`,
+        `https://beerbot-cfhp.onrender.com/api/cart/${itemId}/quantity`,
         { quantity: newQuantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -81,7 +81,7 @@ const Cart = () => {
 
       console.log('Отправка заказа:', { items: cartItems });
       const response = await axios.post(
-        'http://localhost:5000/api/orders',
+        'https://beerbot-cfhp.onrender.com/api/orders',
         { items: cartItems },
         { headers: { Authorization: `Bearer ${token}` } }
       );

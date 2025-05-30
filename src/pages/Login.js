@@ -15,7 +15,7 @@ const Login = () => {
 
     try {
       const loginData = { email, password };
-      const response = await axios.post('http://localhost:5000/api/auth/login', loginData);
+      const response = await axios.post('https://beerbot-cfhp.onrender.com/api/auth/login', loginData);
       console.log('Login response:', response.data);
 
       // Сохранение токена в localStorage

@@ -14,13 +14,13 @@ const Profile = () => {
         const token = localStorage.getItem('token');
         if (!token) throw new Error('Требуется авторизация');
 
-        const userResponse = await axios.get('http://localhost:5000/api/auth/profile', {
+        const userResponse = await axios.get('https://beerbot-cfhp.onrender.com/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(userResponse.data.user);
         setAddress(userResponse.data.user.address || "");
 
-        const ordersResponse = await axios.get('http://localhost:5000/api/orders', {
+        const ordersResponse = await axios.get('https://beerbot-cfhp.onrender.com/api/orders', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOrders(ordersResponse.data);
@@ -38,7 +38,7 @@ const Profile = () => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Требуется авторизация');
 
-      await axios.put('http://localhost:5000/api/auth/profile/address', { address }, {
+      await axios.put('https://beerbot-cfhp.onrender.com/api/auth/profile/address', { address }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Адрес успешно сохранён');

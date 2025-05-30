@@ -35,7 +35,7 @@ const Register = () => {
         phone,
       };
 
-      const response = await axios.post('http://localhost:5000/api/auth/register', registerData);
+      const response = await axios.post('https://beerbot-cfhp.onrender.com/api/auth/register', registerData);
       console.log('Registration response:', response.data);
       navigate('/login');
     } catch (err) {

@@ -16,7 +16,7 @@ const Products = () => {
           throw new Error('Требуется авторизация');
         }
 
-        const response = await axios.get('http://localhost:5000/api/products', {
+        const response = await axios.get('https://beerbot-cfhp.onrender.com/api/products', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -48,7 +48,7 @@ const Products = () => {
 
       const quantity = quantities[productId] || 1;
       const response = await axios.post(
-        'http://localhost:5000/api/cart',
+        'https://beerbot-cfhp.onrender.com/api/cart',
         { productId, quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );

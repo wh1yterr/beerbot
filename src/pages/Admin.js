@@ -29,12 +29,12 @@ const Admin = () => {
           return;
         }
 
-        const ordersResponse = await axios.get('http://localhost:5000/api/orders/all', {
+        const ordersResponse = await axios.get('https://beerbot-cfhp.onrender.com/api/orders/all', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOrders(ordersResponse.data);
 
-        const productsResponse = await axios.get('http://localhost:5000/api/products', {
+        const productsResponse = await axios.get('https://beerbot-cfhp.onrender.com/api/products', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(productsResponse.data);
@@ -50,7 +50,7 @@ const Admin = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/status`,
+        `https://beerbot-cfhp.onrender.com/api/orders/${orderId}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -74,7 +74,7 @@ const Admin = () => {
       }
 
       await axios.put(
-        `http://localhost:5000/api/products/${productId}/quantity`,
+        `https://beerbot-cfhp.onrender.com/${productId}/quantity`,
         { quantity: parsedQuantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -98,7 +98,7 @@ const Admin = () => {
       };
 
       const response = await axios.post(
-        'http://localhost:5000/api/products',
+        'https://beerbot-cfhp.onrender.com/api/products',
         productData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -116,7 +116,7 @@ const Admin = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.delete(
-        `http://localhost:5000/api/products/${productId}`,
+        `https://beerbot-cfhp.onrender.com/products/${productId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
