@@ -17,12 +17,13 @@ app.use('/images', express.static('public/images'));
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Для теста, в продакшене лучше использовать сертификаты Supabase
+    rejectUnauthorized: false, // Игнорировать самоподписанные сертификаты для теста
+    require: true, // Требовать SSL
   },
 });
 
 pool.on('connect', () => {
-  console.log('Successfully connected to PostgreSQL');
+  console.log('Successfully connected to PostgreSQL at', new Date().toISOString());
 });
 
 pool.on('error', (err) => {
@@ -54,4 +55,4 @@ app.use('/api/orders', authenticateToken, ordersRoutes);
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT} at`, new Date().toISOString()));
