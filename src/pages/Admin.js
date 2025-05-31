@@ -3,7 +3,7 @@ import { Container, Tabs, Tab, Table, Form, Pagination, Button, Row, Col } from 
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
-import './css/Admin.css'
+import './Admin.css'
 
 const Admin = () => {
   const [orders, setOrders] = useState([]);
