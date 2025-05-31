@@ -118,34 +118,34 @@ module.exports = (pool) => {
   });
 
   // Получение всех заказов (только для админа)
-  router.get('/all', checkAdmin, async (req, res) => {
-    try {
-      console.log('Запрос всех заказов для админа:', req.user.id);
-      const result = await pool.query(
-        `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status,
-                u.organization_name,
-                json_agg(
-                  json_build_object(
-                    'product_id', oi.product_id,
-                    'name', p.name,
-                    'quantity', oi.quantity,
-                    'price_at_order', oi.price_at_order
-                  )
-                ) as items
-         FROM orders o
-         LEFT JOIN order_items oi ON o.id = oi.order_id
-         LEFT JOIN products p ON oi.product_id = p.id
-         LEFT JOIN users u ON o.user_id = u.id
-         GROUP BY o.id, o.user_id, o.total_price, o.created_at, o.status
-         ORDER BY o.created_at DESC`
-      );
-      console.log('Результат всех заказов:', result.rows);
-      res.json(result.rows);
-    } catch (err) {
-      console.error('Ошибка запроса:', err.stack);
-      res.status(500).json({ message: err.message });
-    }
-  });
+router.get('/all', checkAdmin, async (req, res) => {
+  try {
+    console.log('Запрос всех заказов для админа:', req.user.id);
+    const result = await pool.query(
+      `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status,
+              u.organization_name,
+              json_agg(
+                json_build_object(
+                  'product_id', oi.product_id,
+                  'name', p.name,
+                  'quantity', oi.quantity,
+                  'price_at_order', oi.price_at_order
+                )
+              ) as items
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN users u ON o.user_id = u.id
+       GROUP BY o.id, o.user_id, o.total_price, o.created_at, o.status, u.organization_name  -- Добавляем u.organization_name
+       ORDER BY o.created_at DESC`
+    );
+    console.log('Результат всех заказов:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Ошибка запроса:', err.stack);
+    res.status(500).json({ message: 'Ошибка загрузки заказов', error: err.message });
+  }
+});
 
   // Обновление статуса заказа (только для админа)
   router.put('/:orderId/status', checkAdmin, async (req, res) => {
