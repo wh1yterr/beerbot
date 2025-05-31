@@ -58,44 +58,48 @@ function App() {
     // Добавляем слушатель событий для изменений в localStorage
     window.addEventListener("storage", checkAuth);
 
-        // Проверяем, что Web App инициализирован
-    useEffect(() => {
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.expand();
-      }
-    }, []);
+    // Очистка слушателя при размонтировании
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+    };
+  }, [isAuthenticated]);
 
-    // Инициализация Telegram Web App
-    if (window.Telegram && window.Telegram.WebApp) {
+  // Инициализация Telegram Web App
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
       console.log("Telegram Web App initialized");
 
       // Настройка кнопки "Закрыть"
-      window.Telegram.WebApp.MainButton.setText("Закрыть")
-        .onClick(() => window.Telegram.WebApp.close())
+      window.Telegram.WebApp.MainButton
+        .setText("Закрыть")
+        .onClick(() => {
+          window.Telegram.WebApp.sendData(JSON.stringify({ action: "close" }));
+          window.Telegram.WebApp.close();
+        })
         .show();
     } else {
       console.warn("Telegram Web App not available");
     }
-
-    // Очистка слушателя при размонтировании
-    return () => {
-      window.removeEventListener("storage", checkAuth);
-    };
-  }, [isAuthenticated]); // Зависимость от isAuthenticated для обновления
+  }, []);
 
   // Функция выхода из системы
   const handleLogout = () => {
     console.log("Logging out...");
     localStorage.removeItem("token");
     setIsAuthenticated(false);
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.sendData(
-        JSON.stringify({ action: "logout" })
-      );
-      console.log("Logout data sent to Telegram");
-      window.Telegram.WebApp.close();
+    
+    if (window.Telegram?.WebApp) {
+      try {
+        window.Telegram.WebApp.sendData(
+          JSON.stringify({ action: "logout" })
+        );
+        console.log("Logout data sent to Telegram");
+        window.Telegram.WebApp.close();
+      } catch (error) {
+        console.error("Error sending logout data:", error);
+      }
     }
   };
 
