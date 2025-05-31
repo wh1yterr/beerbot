@@ -16,6 +16,7 @@ const Admin = () => {
     image: '',
     price: ''
   });
+  const [tempQuantities, setTempQuantities] = useState({}); // Временное состояние для хранения значений
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,7 +75,7 @@ const Admin = () => {
       }
 
       await axios.put(
-        `https://beerbot-cfhp.onrender.com/${productId}/quantity`,
+        `https://beerbot-cfhp.onrender.com/api/products/${productId}/quantity`,
         { quantity: parsedQuantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -116,7 +117,7 @@ const Admin = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.delete(
-        `https://beerbot-cfhp.onrender.com/products/${productId}`,
+        `https://beerbot-cfhp.onrender.com/api/products/${productId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -218,13 +219,13 @@ const Admin = () => {
                     <td>{product.id}</td>
                     <td>{product.name}</td>
                     <td>{product.price} ₽</td>
-                    <td>{product.quantity}</td>
+                    <td>{tempQuantities[product.id] ?? product.quantity}</td>
                     <td>
                       <Form.Control
                         type="number"
                         min="0"
-                        value={product.quantity}
-                        onChange={(e) => updateProductQuantity(product.id, e.target.value)}
+                        value={tempQuantities[product.id] ?? product.quantity}
+                        onChange={(e) => setTempQuantities({ ...tempQuantities, [product.id]: e.target.value })}
                         onBlur={(e) => updateProductQuantity(product.id, e.target.value)}
                       />
                     </td>
@@ -331,5 +332,3 @@ const Admin = () => {
     </Container>
   );
 };
-
-export default Admin;
