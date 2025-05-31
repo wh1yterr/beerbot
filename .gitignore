@@ -7,7 +7,7 @@
 /backend/node_modules
 ../env
 .env
-
+./backend/node_modules
 
 # testing
 /coverage
