@@ -123,6 +123,7 @@ module.exports = (pool) => {
       console.log('Запрос всех заказов для админа:', req.user.id);
       const result = await pool.query(
         `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status,
+                u.organization_name,
                 json_agg(
                   json_build_object(
                     'product_id', oi.product_id,
@@ -134,6 +135,7 @@ module.exports = (pool) => {
          FROM orders o
          LEFT JOIN order_items oi ON o.id = oi.order_id
          LEFT JOIN products p ON oi.product_id = p.id
+         LEFT JOIN users u ON o.user_id = u.id
          GROUP BY o.id, o.user_id, o.total_price, o.created_at, o.status
          ORDER BY o.created_at DESC`
       );
