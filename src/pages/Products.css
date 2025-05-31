@@ -1,0 +1,160 @@
+/* Products.css */
+.products-container {
+  padding: 10px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.products-title {
+  font-size: 2rem;
+  color: #333;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.product-card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.product-card img {
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
+
+.product-card .card-body {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.product-card .card-title {
+  font-size: 1.3rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.product-card .card-text {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.product-card .price {
+  font-size: 1.2rem;
+  color: #28a745;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.product-card .quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.product-card .quantity-controls button {
+  padding: 0.25rem 0.6rem;
+  font-size: 1rem;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+}
+
+.product-card .quantity-controls button:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.product-card .quantity-controls input {
+  width: 60px;
+  text-align: center;
+  padding: 0.25rem;
+  border-radius: 5px;
+  border: 1px solid #ced4da;
+}
+
+.product-card .add-to-cart {
+  background: linear-gradient(135deg, #28a745, #218838);
+  border: none;
+  padding: 8px;
+  font-size: 1rem;
+  color: #fff;
+  border-radius: 20px;
+  transition: background 0.3s ease;
+}
+
+.product-card .add-to-cart:hover {
+  background: linear-gradient(135deg, #218838, #1e7e34);
+}
+
+/* Адаптивность для мобильных устройств (до 768px) */
+@media (max-width: 768px) {
+  .products-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .product-card {
+    margin-bottom: 20px;
+  }
+
+  .product-card img {
+    height: 150px;
+  }
+
+  .product-card .card-title {
+    font-size: 1.1rem;
+  }
+
+  .product-card .card-text {
+    font-size: 0.8rem;
+  }
+
+  .product-card .price {
+    font-size: 1rem;
+  }
+
+  .product-card .quantity-controls button {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .product-card .quantity-controls input {
+    width: 50px;
+    padding: 0.2rem;
+    font-size: 0.9rem;
+  }
+
+  .product-card .add-to-cart {
+    padding: 6px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Анимация */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.products-container {
+  animation: fadeIn 1s ease-in;
+}

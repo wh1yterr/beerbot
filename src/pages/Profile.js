@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Container, Form, Button, Table, Card, Row, Col } from "react-bootstrap";
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import axios from "axios";
+import { toast } from "react-toastify";
+import "./Profile.css"; // Подключение CSS
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -11,22 +12,28 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('Требуется авторизация');
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Требуется авторизация");
 
-        const userResponse = await axios.get('https://beerbot-cfhp.onrender.com/api/auth/profile', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const userResponse = await axios.get(
+          "https://beerbot-cfhp.onrender.com/api/auth/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setUser(userResponse.data.user);
         setAddress(userResponse.data.user.address || "");
 
-        const ordersResponse = await axios.get('https://beerbot-cfhp.onrender.com/api/orders', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const ordersResponse = await axios.get(
+          "https://beerbot-cfhp.onrender.com/api/orders",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setOrders(ordersResponse.data);
       } catch (err) {
-        toast.error('Ошибка загрузки данных профиля или заказов');
-        console.error('Ошибка:', err.response || err);
+        toast.error("Ошибка загрузки данных профиля или заказов");
+        console.error("Ошибка:", err.response || err);
       }
     };
     fetchProfileData();
@@ -35,44 +42,76 @@ const Profile = () => {
   const handleSaveAddress = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('Требуется авторизация');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Требуется авторизация");
 
-      await axios.put('https://beerbot-cfhp.onrender.com/api/auth/profile/address', { address }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success('Адрес успешно сохранён');
+      await axios.put(
+        "https://beerbot-cfhp.onrender.com/api/auth/profile/address",
+        { address },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Адрес успешно сохранён");
     } catch (err) {
-      toast.error('Ошибка сохранения адреса');
-      console.error('Ошибка:', err.response || err);
+      toast.error("Ошибка сохранения адреса");
+      console.error("Ошибка:", err.response || err);
     }
   };
 
   return (
-    <Container className="mt-4" style={{ maxWidth: "960px" }}>
-      <h2 className="mb-4 text-center">Профиль пользователя</h2>
+    <Container className="profile-container">
+      <h2 className="profile-title">Профиль пользователя</h2>
 
       {user && (
-        <Card className="mb-5 shadow-sm">
-          <Card.Header><strong>Информация о пользователе</strong></Card.Header>
+        <Card className="profile-card">
+          <Card.Header>Информация о пользователе</Card.Header>
           <Card.Body>
-            <Row>
-              <Col md={6}><p><strong>Email:</strong> {user.email}</p></Col>
-              <Col md={6}><p><strong>Контактное лицо:</strong> {user.contact_face}</p></Col>
-              <Col md={6}><p><strong>Организация:</strong> {user.organization_name}</p></Col>
-              <Col md={6}><p><strong>ИНН:</strong> {user.inn}</p></Col>
-              <Col md={6}><p><strong>ЕГАИС:</strong> {user.egais_number}</p></Col>
-              <Col md={6}><p><strong>Телефон:</strong> {user.phone}</p></Col>
-              <Col md={12}><p><strong>Адрес:</strong> {user.address || 'Не указан'}</p></Col>
+            <Row className="profile-info">
+              <Col xs={12} md={6}>
+                <p>
+                  <strong>Email:</strong> {user.email}
+                </p>
+              </Col>
+              <Col xs={12} md={6}>
+                <p>
+                  <strong>Контактное лицо:</strong> {user.contact_face}
+                </p>
+              </Col>
+              <Col xs={12} md={6}>
+                <p>
+                  <strong>Организация:</strong> {user.organization_name}
+                </p>
+              </Col>
+              <Col xs={12} md={6}>
+                <p>
+                  <strong>ИНН:</strong> {user.inn}
+                </p>
+              </Col>
+              <Col xs={12} md={6}>
+                <p>
+                  <strong>ЕГАИС:</strong> {user.egais_number}
+                </p>
+              </Col>
+              <Col xs={12} md={6}>
+                <p>
+                  <strong>Телефон:</strong> {user.phone}
+                </p>
+              </Col>
+              <Col xs={12}>
+                <p>
+                  <strong>Адрес:</strong> {user.address || "Не указан"}
+                </p>
+              </Col>
             </Row>
           </Card.Body>
         </Card>
       )}
 
-      <Card className="mb-5 shadow-sm">
-        <Card.Header><strong>Адрес доставки</strong></Card.Header>
+      <Card className="profile-card">
+        <Card.Header>Адрес доставки</Card.Header>
         <Card.Body>
-          <Form onSubmit={handleSaveAddress}>
+          <Form onSubmit={handleSaveAddress} className="profile-address-form">
             <Form.Group controlId="formAddress">
               <Form.Label>Введите новый адрес</Form.Label>
               <Form.Control
@@ -89,13 +128,19 @@ const Profile = () => {
         </Card.Body>
       </Card>
 
-      <Card className="mb-4 shadow-sm">
-        <Card.Header><strong>Мои заказы</strong></Card.Header>
+      <Card className="profile-card">
+        <Card.Header>Мои заказы</Card.Header>
         <Card.Body>
           {orders.length === 0 ? (
             <p>У вас нет заказов</p>
           ) : (
-            <Table striped bordered hover responsive>
+            <Table
+              striped
+              bordered
+              hover
+              responsive
+              className="profile-orders-table"
+            >
               <thead>
                 <tr>
                   <th>Дата</th>
@@ -114,7 +159,8 @@ const Profile = () => {
                       <ul className="mb-0 ps-3">
                         {order.items.map((item) => (
                           <li key={item.product_id}>
-                            {item.name} — {item.quantity} шт. по {item.price_at_order} ₽
+                            {item.name} — {item.quantity} шт. по{" "}
+                            {item.price_at_order} ₽
                           </li>
                         ))}
                       </ul>

@@ -1,0 +1,162 @@
+/* Profile.css */
+.profile-container {
+  padding: 10px;
+  max-width: 960px;
+  margin: 0 auto;
+  animation: fadeIn 1s ease-in;
+}
+
+.profile-title {
+  font-size: 2rem;
+  color: #333;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.profile-card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.profile-card .card-header {
+  background: linear-gradient(135deg, #ffcc00, #ff9900);
+  color: #fff;
+  font-weight: 600;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  padding: 15px;
+}
+
+.profile-card .card-body {
+  padding: 20px;
+}
+
+.profile-info p {
+  margin: 5px 0;
+  font-size: 1rem;
+  color: #444;
+}
+
+.profile-info strong {
+  color: #333;
+}
+
+.profile-address-form .form-label {
+  font-weight: 600;
+  color: #333;
+}
+
+.profile-address-form .form-control {
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 1rem;
+}
+
+.profile-address-form .btn {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border: none;
+  padding: 8px 20px;
+  font-size: 1rem;
+  color: #fff;
+  border-radius: 20px;
+  transition: background 0.3s ease;
+}
+
+.profile-address-form .btn:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+}
+
+.profile-orders-table {
+  font-size: 0.9rem;
+}
+
+.profile-orders-table th,
+.profile-orders-table td {
+  padding: 10px;
+  vertical-align: middle;
+}
+
+.profile-orders-table th {
+  background: #f8f9fa;
+  color: #333;
+  font-weight: 600;
+}
+
+.profile-orders-table td {
+  color: #444;
+}
+
+.profile-orders-table ul {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.profile-orders-table li {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Адаптивность для мобильных устройств (до 768px) */
+@media (max-width: 768px) {
+  .profile-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .profile-card {
+    margin-bottom: 20px;
+  }
+
+  .profile-card .card-header {
+    padding: 10px;
+    font-size: 1rem;
+  }
+
+  .profile-card .card-body {
+    padding: 15px;
+  }
+
+  .profile-info p {
+    font-size: 0.9rem;
+  }
+
+  .profile-address-form .form-label {
+    font-size: 0.9rem;
+  }
+
+  .profile-address-form .form-control {
+    font-size: 0.9rem;
+    padding: 6px;
+  }
+
+  .profile-address-form .btn {
+    font-size: 0.9rem;
+    padding: 6px 15px;
+  }
+
+  .profile-orders-table {
+    font-size: 0.8rem;
+  }
+
+  .profile-orders-table th,
+  .profile-orders-table td {
+    padding: 8px;
+  }
+
+  .profile-orders-table li {
+    font-size: 0.8rem;
+  }
+}
+
+/* Анимация */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

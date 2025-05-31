@@ -1,0 +1,137 @@
+/* Home.css */
+.home-container {
+  padding: 10px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.home-header {
+  background: linear-gradient(135deg, #ffcc00, #ff9900);
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 1s ease-in;
+}
+
+.home-header h1 {
+  font-size: 2.5rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.home-header p {
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.home-advantages .card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  height: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.home-advantages .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.home-advantages h3 {
+  font-size: 1.5rem;
+  color: #ff9900;
+  margin-bottom: 10px;
+}
+
+.home-advantages p {
+  font-size: 1rem;
+  color: #666;
+}
+
+.home-partners {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #ffcc00;
+}
+
+.home-partners h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.home-partners .partner-item {
+  padding: 15px;
+  transition: transform 0.3s ease;
+}
+
+.home-partners .partner-item:hover {
+  transform: scale(1.1);
+}
+
+.home-partners svg {
+  margin-bottom: 10px;
+}
+
+.home-partners p {
+  font-size: 1.1rem;
+  color: #444;
+  font-weight: 500;
+}
+
+/* Адаптивность для мобильных устройств (до 768px) */
+@media (max-width: 768px) {
+  .home-header {
+    padding: 15px;
+    border-radius: 10px;
+  }
+
+  .home-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .home-header p {
+    font-size: 1rem;
+  }
+
+  .home-advantages .card {
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+
+  .home-advantages h3 {
+    font-size: 1.2rem;
+  }
+
+  .home-advantages p {
+    font-size: 0.9rem;
+  }
+
+  .home-partners h2 {
+    font-size: 1.5rem;
+  }
+
+  .home-partners .partner-item {
+    padding: 10px;
+  }
+
+  .home-partners p {
+    font-size: 1rem;
+  }
+
+  .home-partners svg {
+    font-size: 1.5rem;
+  }
+}
+
+/* Анимация */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
