@@ -41,7 +41,23 @@ function App() {
     !!localStorage.getItem("token")
   );
 
+  // Синхронизация состояния isAuthenticated с localStorage
   useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      const authStatus = !!token;
+      if (authStatus !== isAuthenticated) {
+        console.log("Auth status changed:", authStatus);
+        setIsAuthenticated(authStatus);
+      }
+    };
+
+    // Проверяем состояние при монтировании
+    checkAuth();
+
+    // Добавляем слушатель событий для изменений в localStorage
+    window.addEventListener("storage", checkAuth);
+
     // Инициализация Telegram Web App
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
@@ -52,11 +68,19 @@ function App() {
       window.Telegram.WebApp.MainButton.setText("Закрыть")
         .onClick(() => window.Telegram.WebApp.close())
         .show();
+    } else {
+      console.warn("Telegram Web App not available");
     }
-  }, []);
+
+    // Очистка слушателя при размонтировании
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+    };
+  }, [isAuthenticated]); // Зависимость от isAuthenticated для обновления
 
   // Функция выхода из системы
   const handleLogout = () => {
+    console.log("Logging out...");
     localStorage.removeItem("token");
     setIsAuthenticated(false);
     if (window.Telegram && window.Telegram.WebApp) {
@@ -64,6 +88,7 @@ function App() {
         JSON.stringify({ action: "logout" })
       );
       console.log("Logout data sent to Telegram");
+      window.Telegram.WebApp.close();
     }
   };
 
@@ -86,7 +111,7 @@ function App() {
                 !isAuthenticated ? (
                   <Login setIsAuthenticated={setIsAuthenticated} />
                 ) : (
-                  <Navigate to="/products" />
+                  <Navigate to="/products" replace />
                 )
               }
             />
@@ -96,26 +121,38 @@ function App() {
                 !isAuthenticated ? (
                   <Register setIsAuthenticated={setIsAuthenticated} />
                 ) : (
-                  <Navigate to="/products" />
+                  <Navigate to="/products" replace />
                 )
               }
             />
             <Route
               path="/products"
               element={
-                isAuthenticated ? <Products /> : <Navigate to="/login" />
+                isAuthenticated ? (
+                  <Products />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route
               path="/cart"
               element={
-                isAuthenticated ? <Cart /> : <Navigate to="/login" />
+                isAuthenticated ? (
+                  <Cart />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route
               path="/profile"
               element={
-                isAuthenticated ? <Profile /> : <Navigate to="/login" />
+                isAuthenticated ? (
+                  <Profile />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route path="/terms" element={<TermsPage />} />

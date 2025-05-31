@@ -3,7 +3,7 @@ import { Form, Button, Container, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const Login = () => {
+const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,11 +31,21 @@ const Login = () => {
           JSON.stringify({ token: token, action: "auth" })
         );
         console.log("Token sent to Telegram:", token);
+        // Закрываем Web App после отправки
+        window.Telegram.WebApp.close();
       } else {
         console.error("Telegram WebApp API is not available");
       }
 
-      navigate("/profile"); // Перенаправление на страницу профиля после входа
+      // Обновляем состояние авторизации
+      setIsAuthenticated(true);
+
+      // Очищаем форму
+      setEmail("");
+      setPassword("");
+
+      // Перенаправляем на профиль
+      navigate("/profile", { replace: true });
     } catch (err) {
       if (err.response && err.response.data) {
         setError(err.response.data.message || "Ошибка авторизации");
