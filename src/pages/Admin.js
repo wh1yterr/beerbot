@@ -3,6 +3,7 @@ import { Container, Tabs, Tab, Table, Form, Pagination, Button, Row, Col } from 
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
+import '../Admin.css'
 
 const Admin = () => {
   const [orders, setOrders] = useState([]);
@@ -139,17 +140,26 @@ const Admin = () => {
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
-  return (
-    <Container className="mt-5" style={{ maxWidth: "1200px" }}>
-      <h2 className="mb-4 text-center">Админ-панель</h2>
+return (
+    <Container className="admin-container">
+      <h2 className="mb-3 text-center">Админ-панель</h2>
 
-      <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3">
+      <Tabs
+        activeKey={activeTab}
+        onSelect={(k) => setActiveTab(k)}
+        className="admin-tabs mb-2"
+      >
         <Tab eventKey="orders" title="Управление заказами">
           {orders.length === 0 ? (
             <p>Нет заказов для отображения</p>
           ) : (
             <>
-              <Table striped bordered hover>
+              <Table
+                striped
+                bordered
+                hover
+                className="admin-table"
+              >
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -164,7 +174,7 @@ const Admin = () => {
                   {currentOrders.map((order) => (
                     <tr key={order.id}>
                       <td>{order.id}</td>
-                      <td>{order.organization_name || 'Не указано'}</td>
+                      <td>{order.organization_name || "Не указано"}</td>
                       <td>{order.total_price} ₽</td>
                       <td>{new Date(order.created_at).toLocaleDateString()}</td>
                       <td>{order.status}</td>
@@ -172,6 +182,7 @@ const Admin = () => {
                         <Form.Select
                           value={order.status}
                           onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                          className="admin-select"
                         >
                           <option value="pending">Ожидает</option>
                           <option value="shipped">Отправлен</option>
@@ -183,7 +194,9 @@ const Admin = () => {
                   ))}
                 </tbody>
               </Table>
-              <Pagination className="justify-content-center mt-3">
+              <Pagination
+                className="justify-content-center mt-2 admin-pagination"
+              >
                 <Pagination.Prev onClick={prevPage} disabled={currentPage === 1} />
                 {Array.from({ length: totalPages }, (_, i) => (
                   <Pagination.Item
@@ -203,7 +216,12 @@ const Admin = () => {
           {products.length === 0 ? (
             <p>Нет продуктов для отображения</p>
           ) : (
-            <Table striped bordered hover>
+            <Table
+              striped
+              bordered
+              hover
+              className="admin-table"
+            >
               <thead>
                 <tr>
                   <th>ID</th>
@@ -227,6 +245,7 @@ const Admin = () => {
                         value={tempQuantities[product.id] ?? product.quantity}
                         onChange={(e) => setTempQuantities({ ...tempQuantities, [product.id]: e.target.value })}
                         onBlur={(e) => updateProductQuantity(product.id, e.target.value)}
+                        className="admin-input"
                       />
                     </td>
                   </tr>
@@ -239,7 +258,12 @@ const Admin = () => {
           {products.length === 0 ? (
             <p>Нет продуктов для удаления</p>
           ) : (
-            <Table striped bordered hover>
+            <Table
+              striped
+              bordered
+              hover
+              className="admin-table"
+            >
               <thead>
                 <tr>
                   <th>ID</th>
@@ -261,6 +285,7 @@ const Admin = () => {
                         variant="danger"
                         size="sm"
                         onClick={() => deleteProduct(product.id)}
+                        className="admin-button"
                       >
                         Удалить
                       </Button>
@@ -272,21 +297,22 @@ const Admin = () => {
           )}
         </Tab>
         <Tab eventKey="addProduct" title="Добавление продукта">
-          <Form onSubmit={handleAddProduct} className="mt-4">
+          <Form onSubmit={handleAddProduct} className="admin-form">
             <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
+              <Col xs={12} sm={6} className="mb-2">
+                <Form.Group>
                   <Form.Label>Название</Form.Label>
                   <Form.Control
                     type="text"
                     value={newProduct.name}
                     onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                     required
+                    className="form-control"
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
+              <Col xs={12} sm={6} className="mb-2">
+                <Form.Group>
                   <Form.Label>Цена (₽)</Form.Label>
                   <Form.Control
                     type="number"
@@ -294,22 +320,24 @@ const Admin = () => {
                     value={newProduct.price}
                     onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                     required
+                    className="form-control"
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
+              <Col xs={12} sm={6} className="mb-2">
+                <Form.Group>
                   <Form.Label>Изображение (URL)</Form.Label>
                   <Form.Control
                     type="text"
                     value={newProduct.image}
                     onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
                     required
+                    className="form-control"
                   />
                 </Form.Group>
               </Col>
-              <Col md={12}>
-                <Form.Group className="mb-3">
+              <Col xs={12} className="mb-2">
+                <Form.Group>
                   <Form.Label>Описание</Form.Label>
                   <Form.Control
                     as="textarea"
@@ -317,11 +345,16 @@ const Admin = () => {
                     value={newProduct.description}
                     onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                     required
+                    className="form-control"
                   />
                 </Form.Group>
               </Col>
-              <Col md={12} className="text-center">
-                <Button variant="success" type="submit">
+              <Col xs={12} className="text-center">
+                <Button
+                  variant="success"
+                  type="submit"
+                  className="admin-button"
+                >
                   Добавить продукт
                 </Button>
               </Col>
@@ -332,4 +365,5 @@ const Admin = () => {
     </Container>
   );
 };
+
 export default Admin;
