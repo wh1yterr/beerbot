@@ -58,6 +58,13 @@ function App() {
     // Добавляем слушатель событий для изменений в localStorage
     window.addEventListener("storage", checkAuth);
 
+        // Проверяем, что Web App инициализирован
+    useEffect(() => {
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.expand();
+      }
+    }, []);
+
     // Инициализация Telegram Web App
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
