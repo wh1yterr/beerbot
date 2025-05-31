@@ -3,7 +3,6 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-const DATABASE_URL = require('DATABASE_URL')
 
 dotenv.config();
 
@@ -16,12 +15,11 @@ app.use('/images', express.static('public/images'));
 
 // Подключение к PostgreSQL с использованием pg
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-    require: true,
-  },
-  family: 4,
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
 });
 
 pool.on('connect', () => {
