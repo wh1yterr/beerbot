@@ -1,38 +1,53 @@
 import React, { useState } from "react";
-import { Form, Button, Container, Alert } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { Form, Button, Container, Alert } from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Очистка предыдущих ошибок
+    setError(""); // Очистка предыдущих ошибок
 
     try {
       const loginData = { email, password };
-      const response = await axios.post('https://beerbot-cfhp.onrender.com/api/auth/login', loginData);
-      console.log('Login response:', response.data);
+      const response = await axios.post(
+        "https://beerbot-cfhp.onrender.com/api/auth/login",
+        loginData
+      );
+      console.log("Login response:", response.data);
 
       // Сохранение токена в localStorage
-      localStorage.setItem('token', response.data.token);
-      navigate('/profile'); // Перенаправление на страницу профиля после входа
+      const token = response.data.token;
+      localStorage.setItem("token", token);
+
+      // Отправка токена в Telegram
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.sendData(
+          JSON.stringify({ token: token, action: "auth" })
+        );
+        console.log("Token sent to Telegram:", token);
+      } else {
+        console.error("Telegram WebApp API is not available");
+      }
+
+      navigate("/profile"); // Перенаправление на страницу профиля после входа
     } catch (err) {
       if (err.response && err.response.data) {
-        setError(err.response.data.message || 'Ошибка авторизации');
+        setError(err.response.data.message || "Ошибка авторизации");
       } else {
-        setError('Ошибка сервера');
+        setError("Ошибка сервера");
       }
-      console.error('Login error:', err);
+      console.error("Login error:", err);
     }
   };
 
   return (
-    <Container className="mt-5" style={{ maxWidth: '400px' }}>
+    <Container className="mt-5" style={{ maxWidth: "400px" }}>
       <h2 className="text-center mb-4">Вход</h2>
       {error && <Alert variant="danger">{error}</Alert>}
       <Form onSubmit={handleSubmit}>

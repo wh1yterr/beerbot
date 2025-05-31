@@ -1,26 +1,26 @@
 import React, { useState } from "react";
-import { Form, Button, Container, Alert } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { Form, Button, Container, Alert } from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Register = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [contactFace, setContactFace] = useState('');
-  const [organizationName, setOrganizationName] = useState('');
-  const [inn, setInn] = useState('');
-  const [egaisNumber, setEgaisNumber] = useState('');
-  const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [contactFace, setContactFace] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
+  const [inn, setInn] = useState("");
+  const [egaisNumber, setEgaisNumber] = useState("");
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Очистка предыдущих ошибок
+    setError(""); // Очистка предыдущих ошибок
 
     if (password !== confirmPassword) {
-      setError('Пароли не совпадают');
+      setError("Пароли не совпадают");
       return;
     }
 
@@ -35,21 +35,37 @@ const Register = () => {
         phone,
       };
 
-      const response = await axios.post('https://beerbot-cfhp.onrender.com/api/auth/register', registerData);
-      console.log('Registration response:', response.data);
-      navigate('/login');
+      const response = await axios.post(
+        "https://beerbot-cfhp.onrender.com/api/auth/register",
+        registerData
+      );
+      console.log("Registration response:", response.data);
+      const token = response.data.token; // Предполагается, что API возвращает токен
+      localStorage.setItem("token", token);
+
+      // Отправка токена в Telegram
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.sendData(
+          JSON.stringify({ token: token, action: "auth" })
+        );
+        console.log("Token sent to Telegram:", token);
+      } else {
+        console.error("Telegram WebApp API is not available");
+      }
+
+      navigate("/login");
     } catch (err) {
       if (err.response && err.response.data) {
-        setError(err.response.data.message || 'Ошибка регистрации');
+        setError(err.response.data.message || "Ошибка регистрации");
       } else {
-        setError('Ошибка сервера');
+        setError("Ошибка сервера");
       }
-      console.error('Registration error:', err);
+      console.error("Registration error:", err);
     }
   };
 
   return (
-    <Container className="mt-5" style={{ maxWidth: '400px' }}>
+    <Container className="mt-5" style={{ maxWidth: "400px" }}>
       <h2 className="text-center mb-4">Регистрация</h2>
       {error && <Alert variant="danger">{error}</Alert>}
       <Form onSubmit={handleSubmit}>

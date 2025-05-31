@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Button, Image } from "react-bootstrap";
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import { Container, Table, Button } from "react-bootstrap";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -9,17 +9,20 @@ const Cart = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('Требуется авторизация');
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Требуется авторизация");
 
-        const response = await axios.get('https://beerbot-cfhp.onrender.com/api/cart', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log('Данные корзины:', response.data);
+        const response = await axios.get(
+          "https://beerbot-cfhp.onrender.com/api/cart",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        console.log("Данные корзины:", response.data);
         setCartItems(response.data);
       } catch (err) {
-        toast.error('Ошибка загрузки корзины');
-        console.error('Ошибка загрузки корзины:', err.response || err);
+        toast.error("Ошибка загрузки корзины");
+        console.error("Ошибка загрузки корзины:", err.response || err);
       }
     };
     fetchCartItems();
@@ -27,48 +30,55 @@ const Cart = () => {
 
   const removeFromCart = async (itemId) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`https://beerbot-cfhp.onrender.com/api/cart/${itemId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCartItems(cartItems.filter(item => item.id !== itemId));
-      toast.success('Товар удалён из корзины');
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `https://beerbot-cfhp.onrender.com/api/cart/${itemId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setCartItems(cartItems.filter((item) => item.id !== itemId));
+      toast.success("Товар удалён из корзины");
     } catch (err) {
-      toast.error('Ошибка удаления товара');
-      console.error('Ошибка удаления:', err);
+      toast.error("Ошибка удаления товара");
+      console.error("Ошибка удаления:", err);
     }
   };
 
   const updateCartQuantity = async (itemId, newQuantity) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await axios.put(
         `https://beerbot-cfhp.onrender.com/api/cart/${itemId}/quantity`,
         { quantity: newQuantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setCartItems(cartItems.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
-      toast.success('Количество обновлено');
+      setCartItems(
+        cartItems.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        )
+      );
+      toast.success("Количество обновлено");
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ошибка обновления количества');
-      console.error('Ошибка обновления количества:', err.response || err);
+      toast.error(
+        err.response?.data?.message || "Ошибка обновления количества"
+      );
+      console.error("Ошибка обновления количества:", err.response || err);
     }
   };
 
   const increaseQuantity = (itemId) => {
-    const item = cartItems.find(item => item.id === itemId);
+    const item = cartItems.find((item) => item.id === itemId);
     if (item.quantity < item.available_quantity) {
       updateCartQuantity(itemId, item.quantity + 1);
     } else {
-      toast.error('Достигнут лимит доступного количества');
+      toast.error("Достигнут лимит доступного количества");
     }
   };
 
   const decreaseQuantity = (itemId) => {
-    const item = cartItems.find(item => item.id === itemId);
+    const item = cartItems.find((item) => item.id === itemId);
     if (item.quantity > 1) {
       updateCartQuantity(itemId, item.quantity - 1);
     }
@@ -76,33 +86,57 @@ const Cart = () => {
 
   const placeOrder = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('Требуется авторизация');
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Требуется авторизация");
 
-      console.log('Отправка заказа:', { items: cartItems });
+      console.log("Отправка заказа:", { items: cartItems });
       const response = await axios.post(
-        'https://beerbot-cfhp.onrender.com/api/orders',
+        "https://beerbot-cfhp.onrender.com/api/orders",
         { items: cartItems },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setCartItems([]);
-      toast.success('Заказ успешно оформлен!');
-      console.log('Ответ сервера:', response.data);
+      toast.success("Заказ успешно оформлен!");
+      console.log("Ответ сервера:", response.data);
+
+      // Отправка данных о заказе в Telegram
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.sendData(
+          JSON.stringify({
+            action: "order",
+            orderId: response.data.order.id,
+            totalPrice: response.data.order.total_price,
+            status: response.data.order.status,
+          })
+        );
+        console.log("Order data sent to Telegram:", response.data.order);
+      } else {
+        console.error("Telegram WebApp API is not available");
+      }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ошибка при оформлении заказа');
-      console.error('Ошибка оформления заказа:', err.response || err);
+      toast.error(
+        err.response?.data?.message || "Ошибка при оформлении заказа"
+      );
+      console.error("Ошибка оформления заказа:", err.response || err);
     }
   };
 
   const calculateTotalPrice = () => {
-    return cartItems.reduce((total, item) => {
-      const price = typeof item.price === 'string' ? parseFloat(item.price.split('₽')[0]) : parseFloat(item.price);
-      return total + price * item.quantity;
-    }, 0).toFixed(2);
+    return cartItems
+      .reduce((total, item) => {
+        const price =
+          typeof item.price === "string"
+            ? parseFloat(item.price.split("₽")[0])
+            : parseFloat(item.price);
+        return total + price * item.quantity;
+      }, 0)
+      .toFixed(2);
   };
 
-  const isOrderPossible = cartItems.every(item => item.quantity <= item.available_quantity);
+  const isOrderPossible = cartItems.every(
+    (item) => item.quantity <= item.available_quantity
+  );
 
   return (
     <Container className="mt-5" style={{ maxWidth: "900px" }}>
@@ -148,7 +182,10 @@ const Cart = () => {
                     </div>
                   </td>
                   <td>
-                    <Button variant="danger" onClick={() => removeFromCart(item.id)}>
+                    <Button
+                      variant="danger"
+                      onClick={() => removeFromCart(item.id)}
+                    >
                       Удалить
                     </Button>
                   </td>
