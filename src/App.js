@@ -41,6 +41,22 @@ function App() {
     !!localStorage.getItem("token")
   );
 
+  // Функция для отправки токена в Telegram
+  const sendAuthToTelegram = (token) => {
+    if (window.Telegram?.WebApp) {
+      try {
+        window.Telegram.WebApp.sendData(
+          JSON.stringify({ token, action: "auth" })
+        );
+        console.log("Auth data sent to Telegram:", token);
+      } catch (error) {
+        console.error("Error sending auth data to Telegram:", error);
+      }
+    } else {
+      console.warn("Telegram Web App not available during auth send.");
+    }
+  };
+
   // Синхронизация состояния isAuthenticated с localStorage
   useEffect(() => {
     const checkAuth = () => {
@@ -49,6 +65,9 @@ function App() {
       if (authStatus !== isAuthenticated) {
         console.log("Auth status changed:", authStatus);
         setIsAuthenticated(authStatus);
+        if (authStatus && token) {
+          sendAuthToTelegram(token); // Отправка токена при входе
+        }
       }
     };
 
@@ -80,7 +99,7 @@ function App() {
         })
         .show();
     } else {
-      console.warn("Telegram Web App not available");
+      console.warn("Telegram Web App not available. Ensure the app is opened via Telegram.");
     }
   }, []);
 
