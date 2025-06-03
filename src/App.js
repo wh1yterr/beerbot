@@ -13,7 +13,7 @@ import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 import TermsPage from "./pages/TermsPage";
 import Admin from "./pages/Admin";
-import  jwtDecode  from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
