@@ -48,12 +48,12 @@ function App() {
         window.Telegram.WebApp.sendData(
           JSON.stringify({ token, action: "auth" })
         );
-        console.log("Auth data sent to Telegram:", token);
+        alert("Auth data sent to Telegram: " + token); // Используем alert
       } catch (error) {
-        console.error("Error sending auth data to Telegram:", error);
+        alert("Error sending auth data to Telegram: " + error.message); // Используем alert для ошибок
       }
     } else {
-      console.warn("Telegram Web App not available during auth send.");
+      alert("Telegram Web App not available during auth send."); // Используем alert
     }
   };
 
@@ -84,24 +84,22 @@ function App() {
   }, [isAuthenticated]);
 
   // Инициализация Telegram Web App
-  useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
-      console.log("Telegram Web App initialized");
-
-      // Настройка кнопки "Закрыть"
-      window.Telegram.WebApp.MainButton
-        .setText("Закрыть")
-        .onClick(() => {
-          window.Telegram.WebApp.sendData(JSON.stringify({ action: "close" }));
-          window.Telegram.WebApp.close();
-        })
-        .show();
-    } else {
-      console.warn("Telegram Web App not available. Ensure the app is opened via Telegram.");
-    }
-  }, []);
+    useEffect(() => {
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+        alert("Telegram Web App initialized"); // Используем alert
+        window.Telegram.WebApp.MainButton
+          .setText("Закрыть")
+          .onClick(() => {
+            window.Telegram.WebApp.sendData(JSON.stringify({ action: "close" }));
+            window.Telegram.WebApp.close();
+          })
+          .show();
+      } else {
+        alert("Telegram Web App not available. Ensure the app is opened via Telegram."); // Используем alert
+      }
+    }, []);
 
   // Функция выхода из системы
   const handleLogout = () => {
