@@ -27,14 +27,16 @@ const Login = ({ setIsAuthenticated }) => {
 
       // Отправка токена в Telegram
       if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData(
-          JSON.stringify({ token: token, action: "auth" })
-        );
-        console.log("Token sent to Telegram:", token);
-        // Закрываем Web App после отправки
-        window.Telegram.WebApp.close();
+        try {
+          window.Telegram.WebApp.sendData(
+            JSON.stringify({ token: token, action: "auth" })
+          );
+          alert("Token sent to Telegram from Login: " + token); // Добавляем alert для отладки
+        } catch (sendError) {
+          alert("Error sending token to Telegram: " + sendError.message); // Добавляем alert для ошибок
+        }
       } else {
-        console.error("Telegram WebApp API is not available");
+        alert("Telegram Web App not available during login."); // Добавляем alert
       }
 
       // Обновляем состояние авторизации
