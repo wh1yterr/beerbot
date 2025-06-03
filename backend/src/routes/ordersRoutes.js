@@ -4,12 +4,13 @@ const crypto = require('crypto');
 module.exports = (pool) => {
   const router = express.Router();
 
-  // Middleware для проверки токена (кроме /code/:order_code)
+  // Функция для генерации уникального 6-символьного кода
+  const generateOrderCode = () => {
+    return crypto.randomBytes(3).toString('hex').toUpperCase(); // Пример: "A1B2C3"
+  };
+
+  // Middleware для проверки токена
   router.use((req, res, next) => {
-    if (req.path.startsWith('/code/')) {
-      next(); // Пропускаем проверку токена для /code/:order_code
-      return;
-    }
     const token = req.header('Authorization')?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Доступ запрещён' });
 
@@ -66,6 +67,7 @@ module.exports = (pool) => {
         [orderCode]
       );
 
+      // Проверка уникальности кода
       while (existingOrder.rows.length > 0) {
         orderCode = generateOrderCode();
         existingOrder = await pool.query(
@@ -88,6 +90,7 @@ module.exports = (pool) => {
           'INSERT INTO order_items (order_id, product_id, quantity, price_at_order) VALUES ($1, $2, $3, $4)',
           [orderId, item.product_id, item.quantity, price]
         );
+        // Вычитание остатка
         await pool.query(
           'UPDATE products SET quantity = quantity - $1 WHERE id = $2',
           [item.quantity, item.product_id]
@@ -109,7 +112,7 @@ module.exports = (pool) => {
     }
   });
 
-  // Получение заказа по order_code (без авторизации)
+  // Получение заказа по order_code
   router.get('/code/:order_code', async (req, res) => {
     try {
       const { order_code } = req.params;
