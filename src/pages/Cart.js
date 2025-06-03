@@ -100,20 +100,9 @@ const Cart = () => {
       toast.success("Заказ успешно оформлен!");
       console.log("Ответ сервера:", response.data);
 
-      // Отправка данных о заказе в Telegram
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData(
-          JSON.stringify({
-            action: "order",
-            orderId: response.data.order.id,
-            totalPrice: response.data.order.total_price,
-            status: response.data.order.status,
-          })
-        );
-        console.log("Order data sent to Telegram:", response.data.order);
-      } else {
-        console.error("Telegram WebApp API is not available");
-      }
+      // Показываем код заказа пользователю
+      const { order_code } = response.data;
+      alert(`Ваш заказ успешно создан! Код заказа: ${order_code}. Используйте его в боте с командой /addorder <код>.`);
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Ошибка при оформлении заказа"
