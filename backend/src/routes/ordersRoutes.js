@@ -1,6 +1,5 @@
 const express = require('express');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
 
 module.exports = (pool) => {
   const router = express.Router();
@@ -15,6 +14,7 @@ module.exports = (pool) => {
     const token = req.header('Authorization')?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Доступ запрещён' });
 
+    const jwt = require('jsonwebtoken');
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (err) return res.status(403).json({ message: 'Недействительный токен' });
       req.user = user;
@@ -113,9 +113,9 @@ module.exports = (pool) => {
   });
 
   // Получение заказа по order_code
-  router.get('/code/:code', async (req, res) => {
+  router.get('/code/:order_code', async (req, res) => {
     try {
-      const { code } = req.params;
+      const { order_code } = req.params;
       const result = await pool.query(
         `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status, o.order_code,
                 json_agg(
@@ -132,7 +132,7 @@ module.exports = (pool) => {
          WHERE o.order_code = $1
          GROUP BY o.id, o.user_id, o.total_price, o.created_at, o.status, o.order_code
          ORDER BY o.created_at DESC`,
-        [code.toUpperCase()]
+        [order_code.toUpperCase()]
       );
 
       if (result.rows.length === 0) {
