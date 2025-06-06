@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 module.exports = (pool) => {
   const router = express.Router();
@@ -10,17 +11,15 @@ module.exports = (pool) => {
   };
 
   // Middleware для проверки токена
-  router.use((req, res, next) => {
+  const authenticateToken = (req, res, next) => {
     const token = req.header('Authorization')?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Доступ запрещён' });
-
-    const jwt = require('jsonwebtoken');
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (err) return res.status(403).json({ message: 'Недействительный токен' });
       req.user = user;
       next();
     });
-  });
+  };
 
   // Middleware для проверки роли админа
   const checkAdmin = (req, res, next) => {
@@ -31,7 +30,7 @@ module.exports = (pool) => {
   };
 
   // Оформление заказа
-  router.post('/', async (req, res) => {
+  router.post('/', authenticateToken, async (req, res) => {
     try {
       console.log('Запрос на оформление заказа:', req.body);
       const token = req.user;
@@ -127,7 +126,7 @@ module.exports = (pool) => {
   });
 
   // Получение заказов пользователя
-  router.get('/', async (req, res) => {
+  router.get('/', authenticateToken, async (req, res) => {
     try {
       console.log('Запрос заказов для user_id:', req.user.id);
       const token = req.user;

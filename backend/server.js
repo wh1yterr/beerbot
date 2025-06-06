@@ -67,11 +67,11 @@ const ordersRoutes = require('./src/routes/ordersRoutes');
 
 // Базовые маршруты без аутентификации
 app.use('/api/auth', authRoutes(pool));
+app.use('/api/orders', ordersRoutes(pool));
 
 // Защищенные маршруты с аутентификацией
 app.use('/api/products', authenticateToken, productsRoutes(pool));
 app.use('/api/cart', authenticateToken, cartRoutes(pool));
-app.use('/api/orders', authenticateToken, ordersRoutes(pool));
 
 // Обработка ошибок
 app.use((err, req, res, next) => {
