@@ -72,8 +72,6 @@ function App() {
 
   // Функция для отправки токена в Telegram
   const sendAuthToTelegram = (token) => {
-    toast.info("Отправка данных в Telegram...");
-    
     if (window.Telegram?.WebApp) {
       try {
         const data = {
@@ -84,13 +82,11 @@ function App() {
         toast.success("Данные успешно отправлены в Telegram");
         return true;
       } catch (error) {
-        toast.error(`Ошибка отправки данных: ${error.message}`);
+        console.error("Error sending data to Telegram:", error);
         return false;
       }
-    } else {
-      toast.error("Telegram Web App недоступен");
-      return false;
     }
+    return true; // Если не в Telegram, просто возвращаем true
   };
 
   // Синхронизация состояния isAuthenticated с localStorage
@@ -103,7 +99,6 @@ function App() {
         setIsAuthenticated(authStatus);
         
         if (authStatus && token) {
-          toast.info("Авторизация успешна, отправляем данные в Telegram...");
           sendAuthToTelegram(token);
         }
       }
@@ -119,7 +114,6 @@ function App() {
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
-      toast.info("Telegram Web App инициализирован");
       
       window.Telegram.WebApp.MainButton
         .setText("Закрыть")
@@ -130,17 +124,13 @@ function App() {
 
       const token = localStorage.getItem('token');
       if (token) {
-        toast.info("Отправляем данные авторизации в Telegram...");
         sendAuthToTelegram(token);
       }
-    } else {
-      toast.error("Telegram Web App недоступен. Откройте приложение через Telegram.");
     }
   }, []);
 
   // Функция выхода из системы
   const handleLogout = async () => {
-    console.log("Logging out...");
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     
@@ -149,11 +139,9 @@ function App() {
         await window.Telegram.WebApp.sendData(
           JSON.stringify({ action: "logout" })
         );
-        console.log("Logout data sent to Telegram");
         window.Telegram.WebApp.close();
       } catch (error) {
         console.error("Error sending logout data:", error);
-        toast.error("Ошибка при выходе из системы");
       }
     }
   };
