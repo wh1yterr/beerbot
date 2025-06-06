@@ -87,16 +87,33 @@ function App() {
 
   // Инициализация Telegram Web App
   useEffect(() => {
+    console.log("=== Инициализация Telegram Web App ===");
+    console.log("Telegram object available:", !!window.Telegram);
+    console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
+    
     if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
-      
-      window.Telegram.WebApp.MainButton
-        .setText("Закрыть")
-        .onClick(() => {
-          window.Telegram.WebApp.close();
-        })
-        .show();
+      try {
+        console.log("Initializing Telegram WebApp...");
+        window.Telegram.WebApp.ready();
+        console.log("WebApp ready");
+        
+        window.Telegram.WebApp.expand();
+        console.log("WebApp expanded");
+        
+        window.Telegram.WebApp.MainButton
+          .setText("Закрыть")
+          .onClick(() => {
+            console.log("MainButton clicked, closing WebApp");
+            window.Telegram.WebApp.close();
+          })
+          .show();
+        console.log("MainButton configured and shown");
+      } catch (error) {
+        console.error("Error initializing Telegram WebApp:", error);
+        console.error("Error stack:", error.stack);
+      }
+    } else {
+      console.log("Telegram WebApp is not available");
     }
   }, []);
 

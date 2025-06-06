@@ -11,9 +11,10 @@ const Login = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
 
   const sendTokenToTelegram = (token) => {
-    console.log("Attempting to send token to Telegram...");
+    console.log("=== Начало отправки токена в Telegram ===");
     console.log("Token:", token);
     console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
+    console.log("Telegram WebApp object:", window.Telegram?.WebApp);
     
     if (window.Telegram?.WebApp) {
       try {
@@ -21,8 +22,11 @@ const Login = ({ setIsAuthenticated }) => {
           action: "auth",
           token: token
         };
-        console.log("Sending data to Telegram:", data);
-        window.Telegram.WebApp.sendData(JSON.stringify(data));
+        console.log("Preparing to send data to Telegram:", data);
+        const jsonData = JSON.stringify(data);
+        console.log("JSON data to send:", jsonData);
+        
+        window.Telegram.WebApp.sendData(jsonData);
         console.log("Data sent successfully");
         toast.success("Данные успешно отправлены в Telegram");
         return true;
@@ -41,7 +45,7 @@ const Login = ({ setIsAuthenticated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    console.log("Starting login process...");
+    console.log("=== Начало процесса входа ===");
 
     try {
       const loginData = { email, password };
