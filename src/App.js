@@ -14,8 +14,9 @@ import Profile from "./pages/Profile";
 import TermsPage from "./pages/TermsPage";
 import Admin from "./pages/Admin";
 import { jwtDecode } from "jwt-decode";
-import { Toaster } from "react-hot-toast";
+import { Toaster, ToastContainer } from "react-hot-toast";
 import axios from "axios";
+import { authService } from "./services/authService";
 
 // Компонент защищённого маршрута для админа
 const ProtectedAdminRoute = ({ children }) => {
@@ -37,53 +38,57 @@ const ProtectedAdminRoute = ({ children }) => {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token")
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Функция для обновления токена
-  const refreshToken = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return false;
-
-    try {
-      const response = await axios.post(
-        'https://beerbot-cfhp.onrender.com/api/auth/refresh-token',
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      const newToken = response.data.token;
-      localStorage.setItem('token', newToken);
-      setIsAuthenticated(true);
-      return true;
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-      localStorage.removeItem('token');
-      setIsAuthenticated(false);
-      return false;
+  // Функция для добавления параметра debug в URL
+  const addDebugParam = () => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('debug')) {
+      url.searchParams.set('debug', '1');
+      window.history.replaceState({}, '', url);
     }
   };
 
-  // Синхронизация состояния isAuthenticated с localStorage
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const authStatus = !!token;
-      
-      if (authStatus !== isAuthenticated) {
-        setIsAuthenticated(authStatus);
-      }
-    };
+  // Функция для открытия консоли разработчика
+  const openDevTools = () => {
+    if (window.Telegram?.WebApp) {
+      const currentUrl = window.location.href;
+      const debugUrl = currentUrl.includes('?') 
+        ? `${currentUrl}&debug=1` 
+        : `${currentUrl}?debug=1`;
+      window.Telegram.WebApp.openLink(debugUrl);
+    }
+  };
 
-    checkAuth();
-    window.addEventListener('storage', checkAuth);
-    return () => window.removeEventListener('storage', checkAuth);
-  }, [isAuthenticated]);
+  useEffect(() => {
+    // Добавляем параметр debug при загрузке
+    addDebugParam();
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      authService.verifyToken(token)
+        .then((isValid) => {
+          setIsAuthenticated(isValid);
+          if (isValid) {
+            return authService.checkAdminStatus(token);
+          }
+          return false;
+        })
+        .then((isAdminUser) => {
+          setIsAdmin(isAdminUser);
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Инициализация Telegram Web App
   useEffect(() => {
@@ -134,9 +139,34 @@ function App() {
     }
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <Router>
       <div className="App d-flex flex-column min-vh-100">
+        {/* Кнопка отладки - видна только в режиме разработки */}
+        {process.env.NODE_ENV === 'development' && (
+          <button 
+            onClick={openDevTools}
+            style={{
+              position: 'fixed',
+              bottom: '10px',
+              right: '10px',
+              zIndex: 9999,
+              padding: '5px 10px',
+              background: '#0088cc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            Открыть DevTools
+          </button>
+        )}
+        
         <Toaster position="top-center" />
         <AgeVerificationModal />
         <Header
@@ -153,7 +183,7 @@ function App() {
                 !isAuthenticated ? (
                   <Login setIsAuthenticated={setIsAuthenticated} />
                 ) : (
-                  <Navigate to="/products" replace />
+                  <Navigate to="/profile" replace />
                 )
               }
             />
@@ -163,7 +193,7 @@ function App() {
                 !isAuthenticated ? (
                   <Register setIsAuthenticated={setIsAuthenticated} />
                 ) : (
-                  <Navigate to="/products" replace />
+                  <Navigate to="/profile" replace />
                 )
               }
             />
@@ -204,9 +234,11 @@ function App() {
             <Route
               path="/admin"
               element={
-                <ProtectedAdminRoute>
+                isAuthenticated && isAdmin ? (
                   <Admin />
-                </ProtectedAdminRoute>
+                ) : (
+                  <Navigate to="/profile" />
+                )
               }
             />
           </Routes>
