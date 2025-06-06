@@ -17,6 +17,7 @@ import { jwtDecode } from "jwt-decode";
 import { Toaster, ToastContainer } from "react-hot-toast";
 import axios from "axios";
 import { authService } from "./services/authService";
+import { Spinner } from "react-bootstrap";
 
 // Компонент защищённого маршрута для админа
 const ProtectedAdminRoute = ({ children }) => {
@@ -120,7 +121,13 @@ function App() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Spinner animation="border" role="status" variant="warning" style={{ width: 60, height: 60 }}>
+          <span className="visually-hidden">Загрузка...</span>
+        </Spinner>
+      </div>
+    );
   }
 
   return (
