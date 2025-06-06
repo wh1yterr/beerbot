@@ -187,7 +187,7 @@ module.exports = (pool) => {
   });
 
   // Обновление статуса заказа (только для админа)
-  router.put('/:orderId/status', checkAdmin, async (req, res) => {
+  router.put('/:orderId/status', authenticateToken, checkAdmin, async (req, res) => {
     try {
       console.log('Обновление статуса заказа:', req.params.orderId, req.body);
       const { orderId } = req.params;
