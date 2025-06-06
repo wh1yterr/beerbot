@@ -273,7 +273,7 @@ module.exports = (pool) => {
     const { user_id } = req.params;
     try {
       const result = await pool.query(
-        `SELECT o.id, o.total_price, o.created_at, o.status, o.order_code
+        `SELECT t.order_code, o.status
          FROM tracked_orders t
          JOIN orders o ON t.order_code = o.order_code
          WHERE t.user_id = $1
@@ -282,10 +282,14 @@ module.exports = (pool) => {
       );
       
       if (result.rows.length === 0) {
-        return res.json({ orders: [] });
+        return res.json({ codes: [] });
       }
 
-      res.json({ orders: result.rows });
+      const codes = result.rows.map(row => ({
+        code: row.order_code,
+        status: row.status
+      }));
+      res.json({ codes });
     } catch (err) {
       console.error('Ошибка при получении заказов:', err);
       res.status(500).json({ message: 'Ошибка при получении заказов', error: err.message });
