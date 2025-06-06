@@ -246,27 +246,48 @@ module.exports = (pool) => {
       return res.status(400).json({ message: 'user_id и order_code обязательны' });
     }
     try {
+      // Проверяем существование заказа
+      const orderResult = await pool.query(
+        'SELECT id FROM orders WHERE order_code = $1',
+        [order_code]
+      );
+      
+      if (orderResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Заказ с таким кодом не найден' });
+      }
+
+      // Добавляем в отслеживаемые
       await pool.query(
         'INSERT INTO tracked_orders (user_id, order_code) VALUES ($1, $2) ON CONFLICT DO NOTHING',
         [user_id, order_code]
       );
       res.json({ message: 'Заказ добавлен в отслеживаемые' });
     } catch (err) {
+      console.error('Ошибка при добавлении заказа:', err);
       res.status(500).json({ message: 'Ошибка при добавлении заказа', error: err.message });
     }
   });
 
-  // Получить все коды заказов пользователя
+  // Получить все отслеживаемые заказы пользователя
   router.get('/track/:user_id', async (req, res) => {
     const { user_id } = req.params;
     try {
       const result = await pool.query(
-        'SELECT order_code FROM tracked_orders WHERE user_id = $1',
+        `SELECT o.id, o.total_price, o.created_at, o.status, o.order_code
+         FROM tracked_orders t
+         JOIN orders o ON t.order_code = o.order_code
+         WHERE t.user_id = $1
+         ORDER BY o.created_at DESC`,
         [user_id]
       );
-      const codes = result.rows.map(row => row.order_code);
-      res.json({ codes });
+      
+      if (result.rows.length === 0) {
+        return res.json({ orders: [] });
+      }
+
+      res.json({ orders: result.rows });
     } catch (err) {
+      console.error('Ошибка при получении заказов:', err);
       res.status(500).json({ message: 'Ошибка при получении заказов', error: err.message });
     }
   });
