@@ -16,18 +16,21 @@ const Register = ({ setIsAuthenticated }) => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const sendTokenToTelegram = (token) => {
+  const sendTokenToTelegram = async (token) => {
     if (window.Telegram?.WebApp) {
       try {
-        window.Telegram.WebApp.sendData(
+        await window.Telegram.WebApp.sendData(
           JSON.stringify({ token, action: "auth" })
         );
         console.log("Token sent to Telegram successfully");
+        return true;
       } catch (error) {
         console.error("Error sending token to Telegram:", error);
+        return false;
       }
     } else {
       console.warn("Telegram Web App not available");
+      return false;
     }
   };
 
@@ -62,8 +65,9 @@ const Register = ({ setIsAuthenticated }) => {
       const token = loginResponse.data.token;
       localStorage.setItem("token", token);
 
-      // Отправляем токен в Telegram
-      sendTokenToTelegram(token);
+      // Отправляем токен в Telegram и ожидаем результат
+      const telegramSuccess = await sendTokenToTelegram(token);
+      console.log("Telegram token send result:", telegramSuccess);
 
       // Обновляем состояние авторизации
       setIsAuthenticated(true);

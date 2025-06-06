@@ -1,36 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Container, Nav, Navbar, Button } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import {jwtDecode} from 'jwt-decode'; 
 import logo from "./logo192.png";
 
-const Header = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState(null);
+const Header = ({ isAuthenticated, handleLogout }) => {
+  const [userRole, setUserRole] = React.useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        setIsAuthenticated(true);
-        setUserRole(decodedToken.role); // Извлекаем роль из токена
+        setUserRole(decodedToken.role);
       } catch (err) {
         console.error('Ошибка декодирования токена:', err);
-        setIsAuthenticated(false);
         setUserRole(null);
       }
     } else {
-      setIsAuthenticated(false);
       setUserRole(null);
     }
-  }, []);
+  }, [isAuthenticated]); // Добавляем зависимость от isAuthenticated
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-    setUserRole(null);
+  const onLogout = () => {
+    handleLogout();
     navigate('/login');
   };
 
@@ -61,7 +55,7 @@ const Header = () => {
             )}
           </Nav>
           {isAuthenticated ? (
-            <Button variant="warning" onClick={handleLogout}>
+            <Button variant="warning" onClick={onLogout}>
               Выйти
             </Button>
           ) : (

@@ -8,8 +8,20 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors({ origin: 'https://beerbot-hazel.vercel.app' }));
+// Настройка CORS
+const corsOptions = {
+  origin: ['https://beerbot-hazel.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 часа
+};
+
+app.use(cors(corsOptions));
+
+// Обработка preflight запросов
+app.options('*', cors(corsOptions));
+
 app.use(express.json());
 app.use('/images', express.static('public/images'));
 
@@ -36,7 +48,12 @@ const authenticateToken = (req, res, next) => {
   if (!token) return res.status(401).json({ message: 'Access denied' });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' });
+    if (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Token expired' });
+      }
+      return res.status(403).json({ message: 'Invalid token' });
+    }
     req.user = user;
     next();
   });

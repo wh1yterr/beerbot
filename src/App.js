@@ -16,6 +16,7 @@ import Admin from "./pages/Admin";
 import { jwtDecode } from "jwt-decode";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
 // Компонент защищённого маршрута для админа
 const ProtectedAdminRoute = ({ children }) => {
@@ -41,8 +42,36 @@ function App() {
     !!localStorage.getItem("token")
   );
 
+  // Функция для обновления токена
+  const refreshToken = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    try {
+      const response = await axios.post(
+        'https://beerbot-cfhp.onrender.com/api/auth/refresh-token',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const newToken = response.data.token;
+      localStorage.setItem('token', newToken);
+      setIsAuthenticated(true);
+      return true;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+      return false;
+    }
+  };
+
   // Функция для отправки токена в Telegram
-  const sendAuthToTelegram = (token) => {
+  const sendAuthToTelegram = async (token) => {
     console.log("Attempting to send auth data to Telegram");
     console.log("Token:", token);
     console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
@@ -51,28 +80,41 @@ function App() {
       try {
         const data = JSON.stringify({ token, action: "auth" });
         console.log("Sending data to Telegram:", data);
-        window.Telegram.WebApp.sendData(data);
+        await window.Telegram.WebApp.sendData(data);
         console.log("Auth data sent to Telegram successfully");
+        return true;
       } catch (error) {
         console.error("Error sending auth data to Telegram:", error);
         console.error("Error details:", error.message);
         toast.error("Ошибка отправки данных в Telegram");
+        return false;
       }
     } else {
       console.warn("Telegram Web App not available");
+      return false;
     }
   };
 
   // Синхронизация состояния isAuthenticated с localStorage
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("token");
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
       const authStatus = !!token;
+      
       if (authStatus !== isAuthenticated) {
         console.log("Auth status changed:", authStatus);
         setIsAuthenticated(authStatus);
+        
         if (authStatus && token) {
-          sendAuthToTelegram(token);
+          const telegramSuccess = await sendAuthToTelegram(token);
+          console.log("Telegram auth result:", telegramSuccess);
+          
+          if (!telegramSuccess) {
+            const refreshSuccess = await refreshToken();
+            if (refreshSuccess) {
+              await sendAuthToTelegram(localStorage.getItem('token'));
+            }
+          }
         }
       }
     };
@@ -81,11 +123,11 @@ function App() {
     checkAuth();
 
     // Добавляем слушатель событий для изменений в localStorage
-    window.addEventListener("storage", checkAuth);
+    window.addEventListener('storage', checkAuth);
 
     // Очистка слушателя при размонтировании
     return () => {
-      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener('storage', checkAuth);
     };
   }, [isAuthenticated]);
 
@@ -106,7 +148,7 @@ function App() {
         .show();
 
       // Если есть токен, отправляем его
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       if (token) {
         sendAuthToTelegram(token);
       }
@@ -116,14 +158,14 @@ function App() {
   }, []);
 
   // Функция выхода из системы
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log("Logging out...");
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
     setIsAuthenticated(false);
     
     if (window.Telegram?.WebApp) {
       try {
-        window.Telegram.WebApp.sendData(
+        await window.Telegram.WebApp.sendData(
           JSON.stringify({ action: "logout" })
         );
         console.log("Logout data sent to Telegram");

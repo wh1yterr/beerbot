@@ -6,7 +6,8 @@ const express = require('express');
 module.exports = (pool) => {
   const router = express.Router();
 
-  router.use((req, res, next) => {
+  // Middleware для проверки JWT
+  const authenticateToken = (req, res, next) => {
     if (req.path === '/login' || req.path === '/register') {
       return next();
     }
@@ -14,11 +15,27 @@ module.exports = (pool) => {
     if (!token) return res.status(401).json({ message: 'Access denied' });
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ message: 'Invalid token' });
+      if (err) {
+        if (err.name === 'TokenExpiredError') {
+          return res.status(401).json({ message: 'Token expired' });
+        }
+        return res.status(403).json({ message: 'Invalid token' });
+      }
       req.user = user;
       next();
     });
-  });
+  };
+
+  router.use(authenticateToken);
+
+  // Генерация токена
+  const generateToken = (user) => {
+    return jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' } // Увеличиваем время жизни токена до 24 часов
+    );
+  };
 
   router.post('/register', [
     body('email').isEmail().withMessage('Valid email is required'),
@@ -36,16 +53,29 @@ module.exports = (pool) => {
     console.log('Registration attempt:', { email, contactFace, organizationName, inn, egaisNumber, phone });
 
     try {
+      // Проверяем, существует ли пользователь
+      const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ message: 'User with this email already exists' });
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10);
-      console.log('Hashed password:', hashedPassword);
       const result = await pool.query(
         'INSERT INTO users (email, password, contact_face, organization_name, inn, egais_number, phone, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
         [email, hashedPassword, contactFace, organizationName, inn, egaisNumber, phone, 'user']
       );
-      console.log('Registration successful:', result.rows[0]);
-      res.status(201).json({ message: 'User registered', user: result.rows[0] });
+
+      const user = result.rows[0];
+      const token = generateToken(user);
+
+      console.log('Registration successful:', { ...user, password: undefined });
+      res.status(201).json({ 
+        message: 'User registered successfully', 
+        token,
+        user: { ...user, password: undefined }
+      });
     } catch (err) {
-      console.error('Error in query:', err.stack);
+      console.error('Error in registration:', err.stack);
       res.status(500).json({ message: 'Ошибка при регистрации', error: err.message });
     }
   });
@@ -60,48 +90,98 @@ module.exports = (pool) => {
     const { email, password } = req.body;
     try {
       const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-      if (result.rows.length === 0) return res.status(400).json({ message: 'User not found' });
+      if (result.rows.length === 0) {
+        return res.status(400).json({ message: 'User not found' });
+      }
 
       const user = result.rows[0];
       const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
+      if (!validPassword) {
+        return res.status(400).json({ message: 'Invalid password' });
+      }
 
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
-      res.json({ message: 'Logged in', token });
+      const token = generateToken(user);
+      console.log('Login successful:', { ...user, password: undefined });
+      
+      res.json({ 
+        message: 'Logged in successfully', 
+        token,
+        user: { ...user, password: undefined }
+      });
     } catch (err) {
-      console.error('Error in query:', err.stack);
-      res.status(500).json({ message: err.message });
+      console.error('Error in login:', err.stack);
+      res.status(500).json({ message: 'Ошибка при входе', error: err.message });
+    }
+  });
+
+  // Обновление токена
+  router.post('/refresh-token', async (req, res) => {
+    const token = req.header('Authorization')?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+      const result = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.id]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const user = result.rows[0];
+      const newToken = generateToken(user);
+
+      res.json({ 
+        message: 'Token refreshed', 
+        token: newToken,
+        user: { ...user, password: undefined }
+      });
+    } catch (err) {
+      console.error('Error refreshing token:', err.stack);
+      res.status(401).json({ message: 'Invalid token' });
     }
   });
 
   router.get('/profile', async (req, res) => {
     try {
-      const token = req.user;
       const result = await pool.query(
         'SELECT email, contact_face, organization_name, inn, egais_number, phone, address FROM users WHERE id = $1',
-        [token.id]
+        [req.user.id]
       );
-      if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
       res.json({ user: result.rows[0] });
     } catch (err) {
-      console.error('Error in query:', err.stack);
-      res.status(500).json({ message: err.message });
+      console.error('Error fetching profile:', err.stack);
+      res.status(500).json({ message: 'Ошибка при получении профиля', error: err.message });
     }
   });
 
   router.put('/profile/address', async (req, res) => {
     try {
-      const token = req.user;
       const { address } = req.body;
-      await pool.query('UPDATE users SET address = $1 WHERE id = $2', [address, token.id]);
-      res.json({ message: 'Address updated' });
+      if (!address) {
+        return res.status(400).json({ message: 'Address is required' });
+      }
+
+      const result = await pool.query(
+        'UPDATE users SET address = $1 WHERE id = $2 RETURNING *',
+        [address, req.user.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({ 
+        message: 'Address updated successfully',
+        user: { ...result.rows[0], password: undefined }
+      });
     } catch (err) {
-      console.error('Error in query:', err.stack);
-      res.status(500).json({ message: err.message });
+      console.error('Error updating address:', err.stack);
+      res.status(500).json({ message: 'Ошибка при обновлении адреса', error: err.message });
     }
   });
 
