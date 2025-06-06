@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button, Container, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import api from "../services/axiosConfig";
 import { authService } from "../services/authService";
 
@@ -39,7 +39,14 @@ const Login = ({ setIsAuthenticated }) => {
 
       if (!telegramResult) {
         console.warn("Не удалось отправить токен в Telegram");
-        toast.warning("Не удалось отправить данные в Telegram. Пожалуйста, убедитесь, что вы открыли приложение через Telegram.");
+        toast("Не удалось отправить данные в Telegram. Пожалуйста, убедитесь, что вы открыли приложение через Telegram.", {
+          icon: '⚠️',
+          style: {
+            borderRadius: '10px',
+            background: '#333',
+            color: '#fff',
+          },
+        });
       } else {
         console.log("Токен успешно отправлен в Telegram");
         toast.success("Вход выполнен успешно");
