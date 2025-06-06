@@ -1,46 +1,15 @@
 import React, { useState } from "react";
 import { Form, Button, Container, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-hot-toast";
+import api from "../services/axiosConfig";
+import { authService } from "../services/authService";
 
 const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-
-  const sendTokenToTelegram = (token) => {
-    console.log("=== Начало отправки токена в Telegram ===");
-    console.log("Token:", token);
-    console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
-    console.log("Telegram WebApp object:", window.Telegram?.WebApp);
-    
-    if (window.Telegram?.WebApp) {
-      try {
-        const data = {
-          action: "auth",
-          token: token
-        };
-        console.log("Preparing to send data to Telegram:", data);
-        const jsonData = JSON.stringify(data);
-        console.log("JSON data to send:", jsonData);
-        
-        window.Telegram.WebApp.sendData(jsonData);
-        console.log("Data sent successfully");
-        toast.success("Данные успешно отправлены в Telegram");
-        return true;
-      } catch (error) {
-        console.error("Error sending data to Telegram:", error);
-        console.error("Error stack:", error.stack);
-        toast.error(`Ошибка отправки данных: ${error.message}`);
-        return false;
-      }
-    } else {
-      console.log("Telegram WebApp is not available");
-      return true;
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,22 +20,21 @@ const Login = ({ setIsAuthenticated }) => {
       const loginData = { email, password };
       console.log("Sending login request...");
       
-      const response = await axios.post(
-        "https://beerbot-cfhp.onrender.com/api/auth/login",
-        loginData
-      );
-
+      const response = await api.post("/auth/login", loginData);
       console.log("Login successful, received token");
       
-      // Сохранение токена в localStorage
       const token = response.data.token;
       localStorage.setItem("token", token);
       toast.success("Вход выполнен успешно");
 
       // Отправка токена в Telegram
       console.log("Sending token to Telegram...");
-      const telegramResult = sendTokenToTelegram(token);
+      const telegramResult = await authService.sendTokenToTelegram(token);
       console.log("Telegram send result:", telegramResult);
+
+      if (!telegramResult) {
+        toast.warning("Не удалось отправить данные в Telegram. Пожалуйста, убедитесь, что вы открыли приложение через Telegram.");
+      }
 
       // Обновляем состояние авторизации
       setIsAuthenticated(true);
