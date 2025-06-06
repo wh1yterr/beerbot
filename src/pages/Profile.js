@@ -143,6 +143,7 @@ const Profile = () => {
             >
               <thead>
                 <tr>
+                  <th>Код</th>
                   <th>Дата</th>
                   <th>Общая сумма</th>
                   <th>Статус</th>
@@ -152,6 +153,22 @@ const Profile = () => {
               <tbody>
                 {orders.map((order) => (
                   <tr key={order.id}>
+                    <td style={{minWidth: 90}}>
+                      <div style={{display:'flex',alignItems:'center',gap:4}}>
+                        <span style={{fontFamily:'monospace',fontSize:'0.95em'}}>{order.order_code}</span>
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          style={{padding:'2px 7px',fontSize:'0.85em'}}
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.order_code);
+                            toast.success('Код скопирован!');
+                          }}
+                        >
+                          📋
+                        </Button>
+                      </div>
+                    </td>
                     <td>{new Date(order.created_at).toLocaleDateString()}</td>
                     <td>{order.total_price} ₽</td>
                     <td>{order.status}</td>
@@ -159,8 +176,7 @@ const Profile = () => {
                       <ul className="mb-0 ps-3">
                         {order.items.map((item) => (
                           <li key={item.product_id}>
-                            {item.name} — {item.quantity} шт. по{" "}
-                            {item.price_at_order} ₽
+                            {item.name} — {item.quantity} шт. по {item.price_at_order} ₽
                           </li>
                         ))}
                       </ul>
