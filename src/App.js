@@ -78,9 +78,12 @@ function App() {
     
     if (window.Telegram?.WebApp) {
       try {
-        const data = JSON.stringify({ token, action: "auth" });
+        const data = {
+          action: "auth",
+          token: token
+        };
         console.log("Sending data to Telegram:", data);
-        await window.Telegram.WebApp.sendData(data);
+        window.Telegram.WebApp.sendData(JSON.stringify(data));
         console.log("Auth data sent to Telegram successfully");
         return true;
       } catch (error) {
@@ -106,15 +109,7 @@ function App() {
         setIsAuthenticated(authStatus);
         
         if (authStatus && token) {
-          const telegramSuccess = await sendAuthToTelegram(token);
-          console.log("Telegram auth result:", telegramSuccess);
-          
-          if (!telegramSuccess) {
-            const refreshSuccess = await refreshToken();
-            if (refreshSuccess) {
-              await sendAuthToTelegram(localStorage.getItem('token'));
-            }
-          }
+          await sendAuthToTelegram(token);
         }
       }
     };
@@ -142,7 +137,6 @@ function App() {
       window.Telegram.WebApp.MainButton
         .setText("Закрыть")
         .onClick(() => {
-          window.Telegram.WebApp.sendData(JSON.stringify({ action: "close" }));
           window.Telegram.WebApp.close();
         })
         .show();
