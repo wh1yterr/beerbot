@@ -33,11 +33,9 @@ const Login = ({ setIsAuthenticated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    toast.info("Начинаем процесс входа...");
 
     try {
       const loginData = { email, password };
-      toast.info("Отправляем запрос на сервер...");
       
       const response = await axios.post(
         "https://beerbot-cfhp.onrender.com/api/auth/login",
@@ -47,10 +45,8 @@ const Login = ({ setIsAuthenticated }) => {
       // Сохранение токена в localStorage
       const token = response.data.token;
       localStorage.setItem("token", token);
-      toast.success("Вход выполнен успешно");
 
       // Отправка токена в Telegram
-      toast.info("Отправляем данные в Telegram...");
       sendTokenToTelegram(token);
 
       // Обновляем состояние авторизации
@@ -63,13 +59,11 @@ const Login = ({ setIsAuthenticated }) => {
       // Перенаправляем на профиль
       navigate("/profile", { replace: true });
     } catch (err) {
-      if (err.response && err.response.data) {
-        const errorMessage = err.response.data.message || "Ошибка авторизации";
-        setError(errorMessage);
-        toast.error(errorMessage);
+      console.error("Login error:", err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        setError("Ошибка сервера");
-        toast.error("Ошибка сервера");
+        setError("Ошибка сервера. Попробуйте позже.");
       }
     }
   };

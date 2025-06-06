@@ -47,18 +47,14 @@ const Register = ({ setIsAuthenticated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    toast.info("Начинаем процесс регистрации...");
 
     try {
-      toast.info("Отправляем данные регистрации...");
       const response = await axios.post(
         "https://beerbot-cfhp.onrender.com/api/auth/register",
         formData
       );
-      toast.success("Регистрация успешна");
 
       // Если регистрация успешна, выполняем вход
-      toast.info("Выполняем вход...");
       const loginResponse = await axios.post(
         "https://beerbot-cfhp.onrender.com/api/auth/login",
         {
@@ -70,10 +66,8 @@ const Register = ({ setIsAuthenticated }) => {
       // Сохраняем токен
       const token = loginResponse.data.token;
       localStorage.setItem("token", token);
-      toast.success("Вход выполнен успешно");
 
       // Отправляем токен в Telegram
-      toast.info("Отправляем данные в Telegram...");
       sendTokenToTelegram(token);
 
       // Обновляем состояние авторизации
@@ -82,13 +76,11 @@ const Register = ({ setIsAuthenticated }) => {
       // Перенаправляем на профиль
       navigate("/profile", { replace: true });
     } catch (err) {
-      if (err.response && err.response.data) {
-        const errorMessage = err.response.data.message || "Ошибка регистрации";
-        setError(errorMessage);
-        toast.error(errorMessage);
+      console.error("Registration error:", err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        setError("Ошибка сервера");
-        toast.error("Ошибка сервера");
+        setError("Ошибка сервера. Попробуйте позже.");
       }
     }
   };

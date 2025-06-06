@@ -14,8 +14,7 @@ import Profile from "./pages/Profile";
 import TermsPage from "./pages/TermsPage";
 import Admin from "./pages/Admin";
 import { jwtDecode } from "jwt-decode";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import axios from "axios";
 
 // Компонент защищённого маршрута для админа
@@ -149,6 +148,7 @@ function App() {
   return (
     <Router>
       <div className="App d-flex flex-column min-vh-100">
+        <Toaster position="top-center" />
         <AgeVerificationModal />
         <Header
           isAuthenticated={isAuthenticated}
@@ -223,18 +223,6 @@ function App() {
 
         {/* Футер */}
         <Footer />
-        {/* Контейнер для тостов */}
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
       </div>
     </Router>
   );
