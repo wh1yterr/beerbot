@@ -78,14 +78,13 @@ function App() {
           token: token
         };
         window.Telegram.WebApp.sendData(JSON.stringify(data));
-        toast.success("Данные успешно отправлены в Telegram");
         return true;
       } catch (error) {
         console.error("Error sending data to Telegram:", error);
         return false;
       }
     }
-    return true; // Если не в Telegram, просто возвращаем true
+    return true;
   };
 
   // Синхронизация состояния isAuthenticated с localStorage
@@ -155,7 +154,6 @@ function App() {
           handleLogout={handleLogout}
         />
 
-        {/* Основной контент */}
         <main className="flex-grow-1">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -209,7 +207,6 @@ function App() {
                 )
               }
             />
-            <Route path="/terms" element={<TermsPage />} />
             <Route
               path="/admin"
               element={
@@ -218,10 +215,10 @@ function App() {
                 </ProtectedAdminRoute>
               }
             />
+            <Route path="/terms" element={<TermsPage />} />
           </Routes>
         </main>
 
-        {/* Футер */}
         <Footer />
       </div>
     </Router>
