@@ -69,24 +69,6 @@ function App() {
     }
   };
 
-  // Функция для отправки токена в Telegram
-  const sendAuthToTelegram = (token) => {
-    if (window.Telegram?.WebApp) {
-      try {
-        const data = {
-          action: "auth",
-          token: token
-        };
-        window.Telegram.WebApp.sendData(JSON.stringify(data));
-        return true;
-      } catch (error) {
-        console.error("Error sending data to Telegram:", error);
-        return false;
-      }
-    }
-    return true;
-  };
-
   // Синхронизация состояния isAuthenticated с localStorage
   useEffect(() => {
     const checkAuth = async () => {
@@ -95,10 +77,6 @@ function App() {
       
       if (authStatus !== isAuthenticated) {
         setIsAuthenticated(authStatus);
-        
-        if (authStatus && token) {
-          sendAuthToTelegram(token);
-        }
       }
     };
 
@@ -119,11 +97,6 @@ function App() {
           window.Telegram.WebApp.close();
         })
         .show();
-
-      const token = localStorage.getItem('token');
-      if (token) {
-        sendAuthToTelegram(token);
-      }
     }
   }, []);
 
@@ -208,6 +181,10 @@ function App() {
               }
             />
             <Route
+              path="/terms"
+              element={<TermsPage />}
+            />
+            <Route
               path="/admin"
               element={
                 <ProtectedAdminRoute>
@@ -215,10 +192,8 @@ function App() {
                 </ProtectedAdminRoute>
               }
             />
-            <Route path="/terms" element={<TermsPage />} />
           </Routes>
         </main>
-
         <Footer />
       </div>
     </Router>
