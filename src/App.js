@@ -104,6 +104,8 @@ function App() {
   }, []);
 
   // Функция выхода из системы
+  // Функция выхода из системы
+
   const handleLogout = async () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
