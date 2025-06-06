@@ -26,20 +26,6 @@
       }
     },
     {
-      "src": "/logo192.png",
-      "dest": "/logo192.png",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/logo512.png",
-      "dest": "/logo512.png",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
       "src": "/(.*)",
       "dest": "/index.html",
       "headers": {
