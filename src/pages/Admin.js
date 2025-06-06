@@ -18,6 +18,7 @@ const Admin = () => {
     price: ''
   });
   const [tempQuantities, setTempQuantities] = useState({}); // Временное состояние для хранения значений
+  const [editingProduct, setEditingProduct] = useState(null); // Состояние для редактируемого продукта
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,6 +131,31 @@ const Admin = () => {
     }
   };
 
+  const updateProductInfo = async (productId, name, price) => {
+    try {
+      const token = localStorage.getItem('token');
+      const parsedPrice = parseFloat(price) || 0;
+      if (parsedPrice < 0) {
+        toast.error('Цена не может быть отрицательной');
+        return;
+      }
+
+      await axios.put(
+        `https://beerbot-cfhp.onrender.com/api/products/${productId}`,
+        { name, price: parsedPrice },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProducts(products.map(product =>
+        product.id === parseInt(productId) ? { ...product, name, price: parsedPrice } : product
+      ));
+      setEditingProduct(null);
+      toast.success('Информация о продукте обновлена');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Ошибка обновления информации о продукте');
+      console.error('Ошибка:', err.response || err);
+    }
+  };
+
   // Логика пагинации
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -235,8 +261,36 @@ return (
                 {products.map((product) => (
                   <tr key={product.id}>
                     <td>{product.id}</td>
-                    <td>{product.name}</td>
-                    <td>{product.price} ₽</td>
+                    <td>
+                      {editingProduct === product.id ? (
+                        <Form.Control
+                          type="text"
+                          defaultValue={product.name}
+                          onBlur={(e) => updateProductInfo(product.id, e.target.value, product.price)}
+                          className="admin-input"
+                        />
+                      ) : (
+                        <span onClick={() => setEditingProduct(product.id)} style={{ cursor: 'pointer' }}>
+                          {product.name}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {editingProduct === product.id ? (
+                        <Form.Control
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          defaultValue={product.price}
+                          onBlur={(e) => updateProductInfo(product.id, product.name, e.target.value)}
+                          className="admin-input"
+                        />
+                      ) : (
+                        <span onClick={() => setEditingProduct(product.id)} style={{ cursor: 'pointer' }}>
+                          {product.price} ₽
+                        </span>
+                      )}
+                    </td>
                     <td>{tempQuantities[product.id] ?? product.quantity}</td>
                     <td>
                       <Form.Control

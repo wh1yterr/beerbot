@@ -99,5 +99,31 @@ module.exports = (pool) => {
     }
   });
 
+  // Обновить информацию о продукте
+  router.put('/:productId', checkAdmin, async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const { name, price } = req.body;
+
+      if (price < 0) {
+        return res.status(400).json({ message: 'Цена не может быть отрицательной' });
+      }
+
+      const result = await pool.query(
+        'UPDATE products SET name = $1, price = $2 WHERE id = $3 AND is_deleted = FALSE RETURNING *',
+        [name, price, productId]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ message: 'Продукт не найден' });
+      }
+
+      res.json({ message: 'Информация о продукте обновлена', product: result.rows[0] });
+    } catch (err) {
+      console.error('Error in query:', err.stack);
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   return router;
 };
