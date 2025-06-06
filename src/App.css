@@ -1,3 +1,9 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .App {
   text-align: center;
   min-height: 100vh;
@@ -40,12 +46,11 @@
   }
 }
 
-
-
 main.flex-grow-1 {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 footer {
