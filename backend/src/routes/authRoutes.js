@@ -146,6 +146,19 @@ module.exports = (pool) => {
     }
   });
 
+  // Проверка валидности токена
+  router.post('/verify-token', (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ valid: false, message: 'Token required' });
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      res.json({ valid: true, user: decoded });
+    } catch (err) {
+      res.status(401).json({ valid: false, message: 'Invalid token' });
+    }
+  });
+
   router.get('/profile', async (req, res) => {
     try {
       const result = await pool.query(
