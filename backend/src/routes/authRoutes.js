@@ -26,7 +26,10 @@ module.exports = (pool) => {
     });
   };
 
-  router.use(authenticateToken);
+  // Применяем middleware только к защищенным маршрутам
+  router.use('/profile', authenticateToken);
+  router.use('/profile/address', authenticateToken);
+  router.use('/refresh-token', authenticateToken);
 
   // Генерация токена
   const generateToken = (user) => {
