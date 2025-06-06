@@ -75,10 +75,10 @@ module.exports = (pool) => {
   });
 
   // Обновление количества товара в корзине
-  router.put('/:id/quantity', async (req, res) => {
+  router.put('/:cartItemId/quantity', async (req, res) => {
     try {
       const token = req.user;
-      const { id } = req.params;
+      const { cartItemId } = req.params;
       const { quantity } = req.body;
 
       const parsedQuantity = parseInt(quantity) || 0;
@@ -89,7 +89,7 @@ module.exports = (pool) => {
       // Проверка остатка
       const cartItemResult = await pool.query(
         'SELECT product_id FROM cart WHERE id = $1 AND user_id = $2',
-        [id, token.id]
+        [cartItemId, token.id]
       );
       if (cartItemResult.rowCount === 0) {
         return res.status(404).json({ message: 'Товар в корзине не найден' });
@@ -110,7 +110,7 @@ module.exports = (pool) => {
 
       const result = await pool.query(
         'UPDATE cart SET quantity = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
-        [parsedQuantity, id, token.id]
+        [parsedQuantity, cartItemId, token.id]
       );
 
       if (result.rowCount === 0) {
@@ -125,13 +125,13 @@ module.exports = (pool) => {
   });
 
   // Удаление товара из корзины
-  router.delete('/:id', async (req, res) => {
+  router.delete('/:cartItemId', async (req, res) => {
     try {
       const token = req.user;
-      const { id } = req.params;
+      const { cartItemId } = req.params;
       await pool.query(
         'DELETE FROM cart WHERE id = $1 AND user_id = $2',
-        [id, token.id]
+        [cartItemId, token.id]
       );
       res.json({ message: 'Товар удалён из корзины' });
     } catch (err) {
