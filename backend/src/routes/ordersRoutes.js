@@ -215,21 +215,15 @@ module.exports = (pool) => {
         const orderResult = await pool.query('SELECT order_code FROM orders WHERE id = $1', [orderId]);
         const order_code = orderResult.rows[0]?.order_code;
         if (order_code) {
-          // 2. Прочитать user_orders.json
-          const userOrdersPath = path.join(__dirname, '../../../user_orders.json');
-          if (fs.existsSync(userOrdersPath)) {
-            const userOrders = JSON.parse(fs.readFileSync(userOrdersPath, 'utf-8'));
-            // 3. Найти всех user_id, у кого есть этот order_code
-            const notifiedUsers = Object.entries(userOrders)
-              .filter(([userId, codes]) => codes.includes(order_code))
-              .map(([userId]) => userId);
-            // 4. Отправить уведомление через Telegram Bot API
-            for (const userId of notifiedUsers) {
-              await axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
-                chat_id: userId,
-                text: `Статус вашего заказа ${order_code} изменён! Новый статус: ${status}`
-              });
-            }
+          // 2. Получить user_id из tracked_orders
+          const trackedResult = await pool.query('SELECT user_id FROM tracked_orders WHERE order_code = $1', [order_code]);
+          const notifiedUsers = trackedResult.rows.map(row => row.user_id);
+          // 3. Отправить уведомление через Telegram Bot API
+          for (const userId of notifiedUsers) {
+            await axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
+              chat_id: userId,
+              text: `Статус вашего заказа ${order_code} изменён! Новый статус: ${status}`
+            });
           }
         }
       } catch (e) {
@@ -242,6 +236,38 @@ module.exports = (pool) => {
     } catch (err) {
       console.error('Ошибка запроса:', err.stack);
       res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Добавить заказ в отслеживаемые
+  router.post('/track', async (req, res) => {
+    const { user_id, order_code } = req.body;
+    if (!user_id || !order_code) {
+      return res.status(400).json({ message: 'user_id и order_code обязательны' });
+    }
+    try {
+      await pool.query(
+        'INSERT INTO tracked_orders (user_id, order_code) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [user_id, order_code]
+      );
+      res.json({ message: 'Заказ добавлен в отслеживаемые' });
+    } catch (err) {
+      res.status(500).json({ message: 'Ошибка при добавлении заказа', error: err.message });
+    }
+  });
+
+  // Получить все коды заказов пользователя
+  router.get('/track/:user_id', async (req, res) => {
+    const { user_id } = req.params;
+    try {
+      const result = await pool.query(
+        'SELECT order_code FROM tracked_orders WHERE user_id = $1',
+        [user_id]
+      );
+      const codes = result.rows.map(row => row.order_code);
+      res.json({ codes });
+    } catch (err) {
+      res.status(500).json({ message: 'Ошибка при получении заказов', error: err.message });
     }
   });
 
