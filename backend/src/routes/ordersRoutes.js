@@ -23,7 +23,7 @@ module.exports = (pool) => {
 
   // Middleware для проверки роли админа
   const checkAdmin = (req, res, next) => {
-    if (req.user.role !== 'admin') {
+    if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Доступ только для администраторов' });
     }
     next();
@@ -157,7 +157,7 @@ module.exports = (pool) => {
   });
 
   // Получение всех заказов (только для админа)
-  router.get('/all', checkAdmin, async (req, res) => {
+  router.get('/all', authenticateToken, checkAdmin, async (req, res) => {
     try {
       console.log('Запрос всех заказов для админа:', req.user.id);
       const result = await pool.query(
