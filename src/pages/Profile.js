@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Container, Form, Button, Table, Card, Row, Col } from "react-bootstrap";
+import { Container, Form, Button, Table, Card, Row, Col, Pagination } from "react-bootstrap";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import "./Profile.css"; // Подключение CSS
@@ -8,6 +8,10 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [address, setAddress] = useState("");
   const [orders, setOrders] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const paginatedOrders = orders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -134,57 +138,72 @@ const Profile = () => {
           {orders.length === 0 ? (
             <p>У вас нет заказов</p>
           ) : (
-            <Table
-              striped
-              bordered
-              hover
-              responsive
-              className="profile-orders-table"
-            >
-              <thead>
-                <tr>
-                  <th>Код</th>
-                  <th>Дата</th>
-                  <th>Общая сумма</th>
-                  <th>Статус</th>
-                  <th>Товары</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td style={{minWidth: 90}}>
-                      <div style={{display:'flex',alignItems:'center',gap:4}}>
-                        <span style={{fontFamily:'monospace',fontSize:'0.95em'}}>{order.order_code}</span>
-                        <Button
-                          variant="outline-secondary"
-                          size="sm"
-                          style={{padding:'2px 7px',fontSize:'0.85em'}}
-                          onClick={() => {
-                            navigator.clipboard.writeText(order.order_code);
-                            toast.success('Код скопирован!');
-                          }}
-                        >
-                          📋
-                        </Button>
-                      </div>
-                    </td>
-                    <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                    <td>{order.total_price} ₽</td>
-                    <td>{order.status}</td>
-                    <td>
-                      <ul className="mb-0 ps-3">
-                        {order.items.map((item) => (
-                          <li key={item.product_id}>
-                            {item.name} — {item.quantity} шт. по {item.price_at_order} ₽
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
+            <>
+              <Table
+                striped
+                bordered
+                hover
+                responsive
+                className="profile-orders-table"
+              >
+                <thead>
+                  <tr>
+                    <th>Код</th>
+                    <th>Дата</th>
+                    <th>Общая сумма</th>
+                    <th>Статус</th>
+                    <th>Товары</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {paginatedOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td style={{minWidth: 90}}>
+                        <div style={{display:'flex',alignItems:'center',gap:4}}>
+                          <span style={{fontFamily:'monospace',fontSize:'0.95em'}}>{order.order_code}</span>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            style={{padding:'2px 7px',fontSize:'0.85em'}}
+                            onClick={() => {
+                              navigator.clipboard.writeText(order.order_code);
+                              toast.success('Код скопирован!');
+                            }}
+                          >
+                            📋
+                          </Button>
+                        </div>
+                      </td>
+                      <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td>{order.total_price} ₽</td>
+                      <td>{order.status}</td>
+                      <td>
+                        <ul className="mb-0 ps-3">
+                          {order.items.map((item) => (
+                            <li key={item.product_id}>
+                              {item.name} — {item.quantity} шт. по {item.price_at_order} ₽
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <Pagination className="justify-content-center mt-2">
+                <Pagination.Prev onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} />
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <Pagination.Item
+                    key={i + 1}
+                    active={i + 1 === currentPage}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </Pagination.Item>
                 ))}
-              </tbody>
-            </Table>
+                <Pagination.Next onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} />
+              </Pagination>
+            </>
           )}
         </Card.Body>
       </Card>

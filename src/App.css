@@ -1,5 +1,8 @@
 .App {
   text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .App-logo {
@@ -39,6 +42,16 @@
 
 body{
   height: 2000px;
+}
+
+main.flex-grow-1 {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+footer {
+  flex-shrink: 0;
 }
 
 
