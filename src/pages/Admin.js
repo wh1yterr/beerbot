@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Tabs, Tab, Table, Form, Pagination, Button, Row, Col } from "react-bootstrap";
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import './Admin.css'
 
 const Admin = () => {

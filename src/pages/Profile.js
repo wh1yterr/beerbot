@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Form, Button, Table, Card, Row, Col } from "react-bootstrap";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import "./Profile.css"; // Подключение CSS
 
 const Profile = () => {
