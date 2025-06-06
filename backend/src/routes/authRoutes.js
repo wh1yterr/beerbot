@@ -201,5 +201,16 @@ module.exports = (pool) => {
     }
   });
 
+  // Проверка статуса админа
+  router.get('/check-admin', authenticateToken, (req, res) => {
+    try {
+      // req.user должен быть установлен authenticateToken
+      const isAdmin = req.user && req.user.role === 'admin';
+      res.json({ isAdmin });
+    } catch (err) {
+      res.status(500).json({ isAdmin: false, message: 'Ошибка проверки статуса админа' });
+    }
+  });
+
   return router;
 };
