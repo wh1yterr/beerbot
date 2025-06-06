@@ -3,57 +3,73 @@ import { Form, Button, Container, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const Register = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [contactFace, setContactFace] = useState("");
-  const [organizationName, setOrganizationName] = useState("");
-  const [inn, setInn] = useState("");
-  const [egaisNumber, setEgaisNumber] = useState("");
-  const [phone, setPhone] = useState("");
+const Register = ({ setIsAuthenticated }) => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    contactFace: "",
+    organizationName: "",
+    inn: "",
+    egaisNumber: "",
+    phone: "",
+  });
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const sendTokenToTelegram = (token) => {
+    if (window.Telegram?.WebApp) {
+      try {
+        window.Telegram.WebApp.sendData(
+          JSON.stringify({ token, action: "auth" })
+        );
+        console.log("Token sent to Telegram successfully");
+      } catch (error) {
+        console.error("Error sending token to Telegram:", error);
+      }
+    } else {
+      console.warn("Telegram Web App not available");
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Очистка предыдущих ошибок
-
-    if (password !== confirmPassword) {
-      setError("Пароли не совпадают");
-      return;
-    }
+    setError("");
 
     try {
-      const registerData = {
-        email,
-        password,
-        contactFace,
-        organizationName,
-        inn,
-        egaisNumber,
-        phone,
-      };
-
       const response = await axios.post(
         "https://beerbot-cfhp.onrender.com/api/auth/register",
-        registerData
+        formData
       );
       console.log("Registration response:", response.data);
-      const token = response.data.token; // Предполагается, что API возвращает токен
+
+      // Если регистрация успешна, выполняем вход
+      const loginResponse = await axios.post(
+        "https://beerbot-cfhp.onrender.com/api/auth/login",
+        {
+          email: formData.email,
+          password: formData.password,
+        }
+      );
+
+      // Сохраняем токен
+      const token = loginResponse.data.token;
       localStorage.setItem("token", token);
 
-      // Отправка токена в Telegram
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData(
-          JSON.stringify({ token: token, action: "auth" })
-        );
-        console.log("Token sent to Telegram:", token);
-      } else {
-        console.error("Telegram WebApp API is not available");
-      }
+      // Отправляем токен в Telegram
+      sendTokenToTelegram(token);
 
-      navigate("/login");
+      // Обновляем состояние авторизации
+      setIsAuthenticated(true);
+
+      // Перенаправляем на профиль
+      navigate("/profile", { replace: true });
     } catch (err) {
       if (err.response && err.response.data) {
         setError(err.response.data.message || "Ошибка регистрации");
@@ -65,7 +81,7 @@ const Register = () => {
   };
 
   return (
-    <Container className="mt-5" style={{ maxWidth: "400px" }}>
+    <Container className="mt-5" style={{ maxWidth: "600px" }}>
       <h2 className="text-center mb-4">Регистрация</h2>
       {error && <Alert variant="danger">{error}</Alert>}
       <Form onSubmit={handleSubmit}>
@@ -73,8 +89,9 @@ const Register = () => {
           <Form.Label>Email</Form.Label>
           <Form.Control
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
             required
           />
         </Form.Group>
@@ -83,28 +100,20 @@ const Register = () => {
           <Form.Label>Пароль</Form.Label>
           <Form.Control
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
             required
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>Подтвердите пароль</Form.Label>
-          <Form.Control
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group className="mb-3">
-          <Form.Label>Контактное лицо (Имя)</Form.Label>
+          <Form.Label>Контактное лицо</Form.Label>
           <Form.Control
             type="text"
-            value={contactFace}
-            onChange={(e) => setContactFace(e.target.value)}
+            name="contactFace"
+            value={formData.contactFace}
+            onChange={handleChange}
             required
           />
         </Form.Group>
@@ -113,18 +122,20 @@ const Register = () => {
           <Form.Label>Название организации</Form.Label>
           <Form.Control
             type="text"
-            value={organizationName}
-            onChange={(e) => setOrganizationName(e.target.value)}
+            name="organizationName"
+            value={formData.organizationName}
+            onChange={handleChange}
             required
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>ИНН организации</Form.Label>
+          <Form.Label>ИНН</Form.Label>
           <Form.Control
             type="text"
-            value={inn}
-            onChange={(e) => setInn(e.target.value)}
+            name="inn"
+            value={formData.inn}
+            onChange={handleChange}
             required
           />
         </Form.Group>
@@ -133,8 +144,9 @@ const Register = () => {
           <Form.Label>Номер ЕГАИС</Form.Label>
           <Form.Control
             type="text"
-            value={egaisNumber}
-            onChange={(e) => setEgaisNumber(e.target.value)}
+            name="egaisNumber"
+            value={formData.egaisNumber}
+            onChange={handleChange}
             required
           />
         </Form.Group>
@@ -143,8 +155,9 @@ const Register = () => {
           <Form.Label>Телефон</Form.Label>
           <Form.Control
             type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
             required
           />
         </Form.Group>

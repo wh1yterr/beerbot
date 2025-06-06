@@ -9,6 +9,21 @@ const Login = ({ setIsAuthenticated }) => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const sendTokenToTelegram = (token) => {
+    if (window.Telegram?.WebApp) {
+      try {
+        window.Telegram.WebApp.sendData(
+          JSON.stringify({ token, action: "auth" })
+        );
+        console.log("Token sent to Telegram successfully");
+      } catch (error) {
+        console.error("Error sending token to Telegram:", error);
+      }
+    } else {
+      console.warn("Telegram Web App not available");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(""); // Очистка предыдущих ошибок
@@ -26,18 +41,7 @@ const Login = ({ setIsAuthenticated }) => {
       localStorage.setItem("token", token);
 
       // Отправка токена в Telegram
-      if (window.Telegram && window.Telegram.WebApp) {
-        try {
-          window.Telegram.WebApp.sendData(
-            JSON.stringify({ token: token, action: "auth" })
-          );
-          alert("Token sent to Telegram from Login: " + token); // Добавляем alert для отладки
-        } catch (sendError) {
-          alert("Error sending token to Telegram: " + sendError.message); // Добавляем alert для ошибок
-        }
-      } else {
-        alert("Telegram Web App not available during login."); // Добавляем alert
-      }
+      sendTokenToTelegram(token);
 
       // Обновляем состояние авторизации
       setIsAuthenticated(true);
