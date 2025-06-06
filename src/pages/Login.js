@@ -25,7 +25,6 @@ const Login = ({ setIsAuthenticated }) => {
       
       const token = response.data.token;
       localStorage.setItem("token", token);
-      toast.success("Вход выполнен успешно");
 
       // Отправка токена в Telegram
       console.log("Sending token to Telegram...");
@@ -34,6 +33,8 @@ const Login = ({ setIsAuthenticated }) => {
 
       if (!telegramResult) {
         toast.warning("Не удалось отправить данные в Telegram. Пожалуйста, убедитесь, что вы открыли приложение через Telegram.");
+      } else {
+        toast.success("Вход выполнен успешно");
       }
 
       // Обновляем состояние авторизации
@@ -50,13 +51,9 @@ const Login = ({ setIsAuthenticated }) => {
       console.error("Error response:", err.response);
       console.error("Error stack:", err.stack);
       
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-        toast.error(err.response.data.message);
-      } else {
-        setError("Ошибка сервера. Попробуйте позже.");
-        toast.error("Ошибка сервера. Попробуйте позже.");
-      }
+      const errorMessage = err.response?.data?.message || "Ошибка сервера. Попробуйте позже.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
