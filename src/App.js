@@ -41,6 +41,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
 
   // Функция для добавления параметра debug в URL
   const addDebugParam = () => {
@@ -62,9 +63,37 @@ function App() {
     }
   };
 
+  // Функция для проверки инициализации Telegram WebApp
+  const checkTelegramWebApp = () => {
+    console.log('=== Проверка Telegram WebApp ===');
+    console.log('window.Telegram:', window.Telegram);
+    console.log('window.Telegram.WebApp:', window.Telegram?.WebApp);
+    
+    const webApp = window.Telegram?.WebApp;
+    if (webApp) {
+      console.log('WebApp инициализирован');
+      console.log('initData:', webApp.initData);
+      console.log('initDataUnsafe:', webApp.initDataUnsafe);
+      console.log('version:', webApp.version);
+      console.log('platform:', webApp.platform);
+      console.log('colorScheme:', webApp.colorScheme);
+      console.log('themeParams:', webApp.themeParams);
+      console.log('isExpanded:', webApp.isExpanded);
+      console.log('viewportHeight:', webApp.viewportHeight);
+      console.log('viewportStableHeight:', webApp.viewportStableHeight);
+      setIsTelegramWebApp(true);
+    } else {
+      console.warn('WebApp не инициализирован');
+      setIsTelegramWebApp(false);
+    }
+  };
+
   useEffect(() => {
     // Добавляем параметр debug при загрузке
     addDebugParam();
+
+    // Проверяем инициализацию Telegram WebApp
+    checkTelegramWebApp();
 
     const token = localStorage.getItem("token");
     if (token) {
@@ -141,6 +170,25 @@ function App() {
 
   if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  // Если приложение открыто не через Telegram, показываем предупреждение
+  if (!isTelegramWebApp) {
+    return (
+      <div style={{
+        padding: '20px',
+        textAlign: 'center',
+        color: '#721c24',
+        backgroundColor: '#f8d7da',
+        border: '1px solid #f5c6cb',
+        borderRadius: '5px',
+        margin: '20px'
+      }}>
+        <h2>⚠️ Внимание!</h2>
+        <p>Это приложение должно быть открыто через Telegram.</p>
+        <p>Пожалуйста, откройте приложение через Telegram бота.</p>
+      </div>
+    );
   }
 
   return (
