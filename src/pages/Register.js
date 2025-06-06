@@ -17,17 +17,28 @@ const Register = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
 
   const sendTokenToTelegram = (token) => {
+    console.log("=== Начало отправки токена в Telegram (Register) ===");
+    console.log("Token:", token);
+    console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
+    console.log("Telegram WebApp object:", window.Telegram?.WebApp);
+    
     if (window.Telegram?.WebApp) {
       try {
         const data = {
           action: "auth",
           token: token
         };
-        window.Telegram.WebApp.sendData(JSON.stringify(data));
-        console.log("Token sent to Telegram successfully");
+        console.log("Preparing to send data:", data);
+        const jsonData = JSON.stringify(data);
+        console.log("JSON data to send:", jsonData);
+        
+        window.Telegram.WebApp.sendData(jsonData);
+        console.log("Data sent successfully");
         return true;
       } catch (error) {
         console.error("Error sending token to Telegram:", error);
+        console.error("Error details:", error.message);
+        console.error("Error stack:", error.stack);
         return false;
       }
     } else {
@@ -46,8 +57,11 @@ const Register = ({ setIsAuthenticated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    console.log("=== Начало процесса регистрации ===");
+    console.log("Form data:", { ...formData, password: "***" });
 
     try {
+      console.log("Sending registration request");
       const response = await axios.post(
         "https://beerbot-cfhp.onrender.com/api/auth/register",
         formData
@@ -55,6 +69,7 @@ const Register = ({ setIsAuthenticated }) => {
       console.log("Registration response:", response.data);
 
       // Если регистрация успешна, выполняем вход
+      console.log("Sending login request");
       const loginResponse = await axios.post(
         "https://beerbot-cfhp.onrender.com/api/auth/login",
         {
@@ -62,26 +77,37 @@ const Register = ({ setIsAuthenticated }) => {
           password: formData.password,
         }
       );
+      console.log("Login response:", loginResponse.data);
 
       // Сохраняем токен
       const token = loginResponse.data.token;
+      console.log("Token received:", token);
       localStorage.setItem("token", token);
 
       // Отправляем токен в Telegram
+      console.log("Sending token to Telegram");
       sendTokenToTelegram(token);
 
       // Обновляем состояние авторизации
+      console.log("Setting isAuthenticated to true");
       setIsAuthenticated(true);
 
       // Перенаправляем на профиль
+      console.log("Navigating to /profile");
       navigate("/profile", { replace: true });
     } catch (err) {
+      console.error("Registration error:", err);
+      console.error("Error details:", err.message);
+      console.error("Error stack:", err.stack);
+      
       if (err.response && err.response.data) {
+        console.error("Error response data:", err.response.data);
         setError(err.response.data.message || "Ошибка регистрации");
       } else {
         setError("Ошибка сервера");
       }
-      console.error("Registration error:", err);
+    } finally {
+      console.log("=== Конец процесса регистрации ===");
     }
   };
 
