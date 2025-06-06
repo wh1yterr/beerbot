@@ -24,10 +24,8 @@ const Login = ({ setIsAuthenticated }) => {
         toast.error(`Ошибка отправки данных: ${error.message}`);
         return false;
       }
-    } else {
-      toast.error("Telegram Web App недоступен");
-      return false;
     }
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -45,6 +43,7 @@ const Login = ({ setIsAuthenticated }) => {
       // Сохранение токена в localStorage
       const token = response.data.token;
       localStorage.setItem("token", token);
+      toast.success("Вход выполнен успешно");
 
       // Отправка токена в Telegram
       sendTokenToTelegram(token);
@@ -62,8 +61,10 @@ const Login = ({ setIsAuthenticated }) => {
       console.error("Login error:", err);
       if (err.response?.data?.message) {
         setError(err.response.data.message);
+        toast.error(err.response.data.message);
       } else {
         setError("Ошибка сервера. Попробуйте позже.");
+        toast.error("Ошибка сервера. Попробуйте позже.");
       }
     }
   };
