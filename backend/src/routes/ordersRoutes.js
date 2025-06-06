@@ -114,36 +114,15 @@ module.exports = (pool) => {
 
   // Получение заказа по order_code
   router.get('/code/:order_code', async (req, res) => {
+    const { order_code } = req.params;
     try {
-      const { order_code } = req.params;
-      const result = await pool.query(
-        `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status, o.order_code,
-                json_agg(
-                  json_build_object(
-                    'product_id', oi.product_id,
-                    'name', p.name,
-                    'quantity', oi.quantity,
-                    'price_at_order', oi.price_at_order
-                  )
-                ) as items
-         FROM orders o
-         LEFT JOIN order_items oi ON o.id = oi.order_id
-         LEFT JOIN products p ON oi.product_id = p.id
-         WHERE o.order_code = $1
-         GROUP BY o.id, o.user_id, o.total_price, o.created_at, o.status, o.order_code
-         ORDER BY o.created_at DESC`,
-        [order_code.toUpperCase()]
-      );
-
+      const result = await pool.query('SELECT * FROM orders WHERE order_code = $1', [order_code]);
       if (result.rows.length === 0) {
-        return res.status(404).json({ message: 'Заказ не найден' });
+        return res.status(404).json({ message: 'Order not found' });
       }
-
-      console.log('Заказ по коду:', result.rows[0]);
       res.json(result.rows[0]);
     } catch (err) {
-      console.error('Ошибка запроса:', err.stack);
-      res.status(500).json({ message: 'Ошибка загрузки заказа', error: err.message });
+      res.status(500).json({ message: 'Server error', error: err.message });
     }
   });
 
