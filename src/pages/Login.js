@@ -18,26 +18,35 @@ const Login = ({ setIsAuthenticated }) => {
 
     try {
       const loginData = { email, password };
-      console.log("Sending login request...");
+      console.log("Отправка запроса на вход...");
       
       const response = await api.post("/auth/login", loginData);
-      console.log("Login successful, received token");
+      console.log("Ответ сервера:", response.data);
       
+      if (!response.data.token) {
+        console.error("Токен отсутствует в ответе");
+        throw new Error("Токен не получен от сервера");
+      }
+
       const token = response.data.token;
+      console.log("Токен получен, сохраняем в localStorage");
       localStorage.setItem("token", token);
 
       // Отправка токена в Telegram
-      console.log("Sending token to Telegram...");
+      console.log("Отправка токена в Telegram...");
       const telegramResult = await authService.sendTokenToTelegram(token);
-      console.log("Telegram send result:", telegramResult);
+      console.log("Результат отправки в Telegram:", telegramResult);
 
       if (!telegramResult) {
+        console.warn("Не удалось отправить токен в Telegram");
         toast.warning("Не удалось отправить данные в Telegram. Пожалуйста, убедитесь, что вы открыли приложение через Telegram.");
       } else {
+        console.log("Токен успешно отправлен в Telegram");
         toast.success("Вход выполнен успешно");
       }
 
       // Обновляем состояние авторизации
+      console.log("Обновляем состояние авторизации");
       setIsAuthenticated(true);
 
       // Очищаем форму
@@ -45,13 +54,24 @@ const Login = ({ setIsAuthenticated }) => {
       setPassword("");
 
       // Перенаправляем на профиль
+      console.log("Перенаправляем на страницу профиля");
       navigate("/profile", { replace: true });
     } catch (err) {
-      console.error("Login error:", err);
-      console.error("Error response:", err.response);
-      console.error("Error stack:", err.stack);
+      console.error("Ошибка при входе:", err);
+      console.error("Детали ошибки:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
       
-      const errorMessage = err.response?.data?.message || "Ошибка сервера. Попробуйте позже.";
+      let errorMessage = "Ошибка сервера. Попробуйте позже.";
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       toast.error(errorMessage);
     }

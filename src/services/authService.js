@@ -10,6 +10,7 @@ export const authService = {
     
     const webApp = window.Telegram?.WebApp;
     console.log('WebApp доступен:', !!webApp);
+    console.log('WebApp данные:', webApp);
     
     if (!webApp) {
       console.error('Telegram WebApp не инициализирован');
@@ -18,7 +19,13 @@ export const authService = {
 
     try {
       console.log('Отправка данных в Telegram...');
-      webApp.sendData(JSON.stringify({ action: 'auth', token }));
+      const data = {
+        action: 'auth',
+        token: token
+      };
+      console.log('Отправляемые данные:', data);
+      
+      webApp.sendData(JSON.stringify(data));
       console.log('Данные успешно отправлены');
       return true;
     } catch (error) {
@@ -30,9 +37,14 @@ export const authService = {
   // Проверка токена
   verifyToken: async (token) => {
     console.log('=== Проверка токена ===');
+    if (!token) {
+      console.error('Токен отсутствует');
+      return false;
+    }
+
     try {
       const response = await api.post('/auth/verify-token', { token });
-      console.log('Токен валиден:', response.data.valid);
+      console.log('Ответ сервера:', response.data);
       return response.data.valid;
     } catch (error) {
       console.error('Ошибка при проверке токена:', error);
@@ -43,11 +55,16 @@ export const authService = {
   // Проверка статуса админа
   checkAdminStatus: async (token) => {
     console.log('=== Проверка статуса админа ===');
+    if (!token) {
+      console.error('Токен отсутствует');
+      return false;
+    }
+
     try {
       const response = await api.get('/auth/check-admin', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Статус админа:', response.data.isAdmin);
+      console.log('Ответ сервера:', response.data);
       return response.data.isAdmin;
     } catch (error) {
       console.error('Ошибка при проверке статуса админа:', error);
@@ -58,11 +75,16 @@ export const authService = {
   // Обновление токена
   refreshToken: async (token) => {
     console.log('=== Обновление токена ===');
+    if (!token) {
+      console.error('Токен отсутствует');
+      throw new Error('Токен не предоставлен');
+    }
+
     try {
       const response = await api.post('/auth/refresh-token', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Токен обновлен');
+      console.log('Ответ сервера:', response.data);
       return response.data.token;
     } catch (error) {
       console.error('Ошибка при обновлении токена:', error);
