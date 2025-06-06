@@ -5,24 +5,26 @@ const API_URL = 'https://beerbot-cfhp.onrender.com/api';
 export const authService = {
   // Проверка инициализации Telegram WebApp
   isTelegramWebAppInitialized: () => {
-    const webApp = window.Telegram?.WebApp;
-    if (!webApp) {
-      console.error('Telegram WebApp не инициализирован');
+    // Проверяем наличие объекта Telegram
+    if (!window.Telegram) {
+      console.error('Объект Telegram не найден');
       return false;
     }
+
+    // Проверяем наличие WebApp
+    if (!window.Telegram.WebApp) {
+      console.error('WebApp не найден');
+      return false;
+    }
+
+    const webApp = window.Telegram.WebApp;
     
-    // Проверяем наличие initData
+    // Проверяем, что мы в Telegram
     if (!webApp.initData) {
-      console.error('WebApp.initData отсутствует');
+      console.error('initData отсутствует');
       return false;
     }
-    
-    // Проверяем наличие user в initDataUnsafe
-    if (!webApp.initDataUnsafe?.user) {
-      console.error('WebApp.initDataUnsafe.user отсутствует');
-      return false;
-    }
-    
+
     return true;
   },
 
@@ -32,23 +34,21 @@ export const authService = {
     console.log('Token:', token);
     
     if (!authService.isTelegramWebAppInitialized()) {
+      console.error('WebApp не инициализирован');
       return false;
     }
 
     const webApp = window.Telegram.WebApp;
     console.log('WebApp данные:', {
-      initData: webApp.initData,
-      initDataUnsafe: webApp.initDataUnsafe,
-      version: webApp.version,
-      platform: webApp.platform
+      platform: webApp.platform,
+      version: webApp.version
     });
 
     try {
       console.log('Отправка данных в Telegram...');
       const data = {
         action: 'auth',
-        token: token,
-        user: webApp.initDataUnsafe.user
+        token: token
       };
       console.log('Отправляемые данные:', data);
       

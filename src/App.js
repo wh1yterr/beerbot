@@ -41,59 +41,42 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
-
-  // Функция для добавления параметра debug в URL
-  const addDebugParam = () => {
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has('debug')) {
-      url.searchParams.set('debug', '1');
-      window.history.replaceState({}, '', url);
-    }
-  };
-
-  // Функция для открытия консоли разработчика
-  const openDevTools = () => {
-    if (window.Telegram?.WebApp) {
-      const currentUrl = window.location.href;
-      const debugUrl = currentUrl.includes('?') 
-        ? `${currentUrl}&debug=1` 
-        : `${currentUrl}?debug=1`;
-      window.Telegram.WebApp.openLink(debugUrl);
-    }
-  };
 
   // Функция для проверки инициализации Telegram WebApp
   const checkTelegramWebApp = () => {
     console.log('=== Проверка Telegram WebApp ===');
-    console.log('window.Telegram:', window.Telegram);
-    console.log('window.Telegram.WebApp:', window.Telegram?.WebApp);
     
-    const webApp = window.Telegram?.WebApp;
-    if (webApp) {
-      console.log('WebApp инициализирован');
-      console.log('initData:', webApp.initData);
-      console.log('initDataUnsafe:', webApp.initDataUnsafe);
-      console.log('version:', webApp.version);
-      console.log('platform:', webApp.platform);
-      console.log('colorScheme:', webApp.colorScheme);
-      console.log('themeParams:', webApp.themeParams);
-      console.log('isExpanded:', webApp.isExpanded);
-      console.log('viewportHeight:', webApp.viewportHeight);
-      console.log('viewportStableHeight:', webApp.viewportStableHeight);
-      setIsTelegramWebApp(true);
-    } else {
-      console.warn('WebApp не инициализирован');
-      setIsTelegramWebApp(false);
+    // Проверяем наличие объекта Telegram
+    if (!window.Telegram) {
+      console.error('Объект Telegram не найден');
+      return false;
     }
+
+    // Проверяем наличие WebApp
+    if (!window.Telegram.WebApp) {
+      console.error('WebApp не найден');
+      return false;
+    }
+
+    const webApp = window.Telegram.WebApp;
+    
+    // Проверяем, что мы в Telegram
+    if (!webApp.initData) {
+      console.error('initData отсутствует');
+      return false;
+    }
+
+    console.log('WebApp успешно инициализирован');
+    console.log('Platform:', webApp.platform);
+    console.log('Version:', webApp.version);
+    
+    return true;
   };
 
   useEffect(() => {
-    // Добавляем параметр debug при загрузке
-    addDebugParam();
-
     // Проверяем инициализацию Telegram WebApp
-    checkTelegramWebApp();
+    const isInitialized = checkTelegramWebApp();
+    console.log('WebApp инициализирован:', isInitialized);
 
     const token = localStorage.getItem("token");
     if (token) {
@@ -119,38 +102,6 @@ function App() {
     }
   }, []);
 
-  // Инициализация Telegram Web App
-  useEffect(() => {
-    console.log("=== Инициализация Telegram Web App ===");
-    console.log("Telegram object available:", !!window.Telegram);
-    console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
-    
-    if (window.Telegram?.WebApp) {
-      try {
-        console.log("Initializing Telegram WebApp...");
-        window.Telegram.WebApp.ready();
-        console.log("WebApp ready");
-        
-        window.Telegram.WebApp.expand();
-        console.log("WebApp expanded");
-        
-        window.Telegram.WebApp.MainButton
-          .setText("Закрыть")
-          .onClick(() => {
-            console.log("MainButton clicked, closing WebApp");
-            window.Telegram.WebApp.close();
-          })
-          .show();
-        console.log("MainButton configured and shown");
-      } catch (error) {
-        console.error("Error initializing Telegram WebApp:", error);
-        console.error("Error stack:", error.stack);
-      }
-    } else {
-      console.log("Telegram WebApp is not available");
-    }
-  }, []);
-
   // Функция выхода из системы
   const handleLogout = async () => {
     localStorage.removeItem('token');
@@ -172,49 +123,9 @@ function App() {
     return <div>Loading...</div>;
   }
 
-  // Если приложение открыто не через Telegram, показываем предупреждение
-  if (!isTelegramWebApp) {
-    return (
-      <div style={{
-        padding: '20px',
-        textAlign: 'center',
-        color: '#721c24',
-        backgroundColor: '#f8d7da',
-        border: '1px solid #f5c6cb',
-        borderRadius: '5px',
-        margin: '20px'
-      }}>
-        <h2>⚠️ Внимание!</h2>
-        <p>Это приложение должно быть открыто через Telegram.</p>
-        <p>Пожалуйста, откройте приложение через Telegram бота.</p>
-      </div>
-    );
-  }
-
   return (
     <Router>
       <div className="App d-flex flex-column min-vh-100">
-        {/* Кнопка отладки - видна только в режиме разработки */}
-        {process.env.NODE_ENV === 'development' && (
-          <button 
-            onClick={openDevTools}
-            style={{
-              position: 'fixed',
-              bottom: '10px',
-              right: '10px',
-              zIndex: 9999,
-              padding: '5px 10px',
-              background: '#0088cc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Открыть DevTools
-          </button>
-        )}
-        
         <Toaster position="top-center" />
         <AgeVerificationModal />
         <Header
