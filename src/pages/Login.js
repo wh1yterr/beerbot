@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Form, Button, Container, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState("");
@@ -10,62 +11,49 @@ const Login = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
 
   const sendTokenToTelegram = (token) => {
-    console.log("=== Начало отправки токена в Telegram (Login) ===");
-    console.log("Token:", token);
-    console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
-    console.log("Telegram WebApp object:", window.Telegram?.WebApp);
-    
     if (window.Telegram?.WebApp) {
       try {
         const data = {
           action: "auth",
           token: token
         };
-        console.log("Preparing to send data:", data);
-        const jsonData = JSON.stringify(data);
-        console.log("JSON data to send:", jsonData);
-        
-        window.Telegram.WebApp.sendData(jsonData);
-        console.log("Data sent successfully");
+        window.Telegram.WebApp.sendData(JSON.stringify(data));
+        toast.success("Данные успешно отправлены в Telegram");
         return true;
       } catch (error) {
-        console.error("Error sending token to Telegram:", error);
-        console.error("Error details:", error.message);
-        console.error("Error stack:", error.stack);
+        toast.error(`Ошибка отправки данных: ${error.message}`);
         return false;
       }
     } else {
-      console.warn("Telegram Web App not available");
+      toast.error("Telegram Web App недоступен");
       return false;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Очистка предыдущих ошибок
-    console.log("=== Начало процесса входа ===");
+    setError("");
+    toast.info("Начинаем процесс входа...");
 
     try {
       const loginData = { email, password };
-      console.log("Sending login request with data:", { ...loginData, password: "***" });
+      toast.info("Отправляем запрос на сервер...");
       
       const response = await axios.post(
         "https://beerbot-cfhp.onrender.com/api/auth/login",
         loginData
       );
-      console.log("Login response:", response.data);
 
       // Сохранение токена в localStorage
       const token = response.data.token;
-      console.log("Token received:", token);
       localStorage.setItem("token", token);
+      toast.success("Вход выполнен успешно");
 
       // Отправка токена в Telegram
-      console.log("Sending token to Telegram");
+      toast.info("Отправляем данные в Telegram...");
       sendTokenToTelegram(token);
 
       // Обновляем состояние авторизации
-      console.log("Setting isAuthenticated to true");
       setIsAuthenticated(true);
 
       // Очищаем форму
@@ -73,21 +61,16 @@ const Login = ({ setIsAuthenticated }) => {
       setPassword("");
 
       // Перенаправляем на профиль
-      console.log("Navigating to /profile");
       navigate("/profile", { replace: true });
     } catch (err) {
-      console.error("Login error:", err);
-      console.error("Error details:", err.message);
-      console.error("Error stack:", err.stack);
-      
       if (err.response && err.response.data) {
-        console.error("Error response data:", err.response.data);
-        setError(err.response.data.message || "Ошибка авторизации");
+        const errorMessage = err.response.data.message || "Ошибка авторизации";
+        setError(errorMessage);
+        toast.error(errorMessage);
       } else {
         setError("Ошибка сервера");
+        toast.error("Ошибка сервера");
       }
-    } finally {
-      console.log("=== Конец процесса входа ===");
     }
   };
 

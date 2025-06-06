@@ -72,10 +72,7 @@ function App() {
 
   // Функция для отправки токена в Telegram
   const sendAuthToTelegram = (token) => {
-    console.log("=== Начало отправки данных в Telegram ===");
-    console.log("Token:", token);
-    console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
-    console.log("Telegram WebApp object:", window.Telegram?.WebApp);
+    toast.info("Отправка данных в Telegram...");
     
     if (window.Telegram?.WebApp) {
       try {
@@ -83,22 +80,15 @@ function App() {
           action: "auth",
           token: token
         };
-        console.log("Preparing to send data:", data);
-        const jsonData = JSON.stringify(data);
-        console.log("JSON data to send:", jsonData);
-        
-        window.Telegram.WebApp.sendData(jsonData);
-        console.log("Data sent successfully");
+        window.Telegram.WebApp.sendData(JSON.stringify(data));
+        toast.success("Данные успешно отправлены в Telegram");
         return true;
       } catch (error) {
-        console.error("Error sending data to Telegram:", error);
-        console.error("Error details:", error.message);
-        console.error("Error stack:", error.stack);
-        toast.error("Ошибка отправки данных в Telegram");
+        toast.error(`Ошибка отправки данных: ${error.message}`);
         return false;
       }
     } else {
-      console.warn("Telegram Web App not available");
+      toast.error("Telegram Web App недоступен");
       return false;
     }
   };
@@ -106,63 +96,45 @@ function App() {
   // Синхронизация состояния isAuthenticated с localStorage
   useEffect(() => {
     const checkAuth = async () => {
-      console.log("=== Проверка авторизации ===");
       const token = localStorage.getItem('token');
-      console.log("Token from localStorage:", token);
       const authStatus = !!token;
-      console.log("Auth status:", authStatus);
-      console.log("Current isAuthenticated:", isAuthenticated);
       
       if (authStatus !== isAuthenticated) {
-        console.log("Auth status changed:", authStatus);
         setIsAuthenticated(authStatus);
         
         if (authStatus && token) {
-          console.log("Sending token to Telegram");
+          toast.info("Авторизация успешна, отправляем данные в Telegram...");
           sendAuthToTelegram(token);
         }
       }
     };
 
-    // Проверяем состояние при монтировании
     checkAuth();
-
-    // Добавляем слушатель событий для изменений в localStorage
     window.addEventListener('storage', checkAuth);
-
-    // Очистка слушателя при размонтировании
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-    };
+    return () => window.removeEventListener('storage', checkAuth);
   }, [isAuthenticated]);
 
   // Инициализация Telegram Web App
   useEffect(() => {
-    console.log("=== Инициализация Telegram Web App ===");
     if (window.Telegram?.WebApp) {
-      console.log("Telegram Web App found");
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
-      console.log("Telegram Web App initialized");
+      toast.info("Telegram Web App инициализирован");
       
-      // Настройка кнопки закрытия
       window.Telegram.WebApp.MainButton
         .setText("Закрыть")
         .onClick(() => {
           window.Telegram.WebApp.close();
         })
         .show();
-      console.log("Main button configured");
 
-      // Если есть токен, отправляем его
       const token = localStorage.getItem('token');
-      console.log("Token from localStorage:", token);
       if (token) {
-        console.log("Sending initial token to Telegram");
+        toast.info("Отправляем данные авторизации в Telegram...");
         sendAuthToTelegram(token);
       }
     } else {
-      console.warn("Telegram Web App not available. Ensure the app is opened via Telegram.");
+      toast.error("Telegram Web App недоступен. Откройте приложение через Telegram.");
     }
   }, []);
 
