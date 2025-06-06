@@ -14,7 +14,7 @@ import Profile from "./pages/Profile";
 import TermsPage from "./pages/TermsPage";
 import Admin from "./pages/Admin";
 import { jwtDecode } from "jwt-decode";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Компонент защищённого маршрута для админа
@@ -43,17 +43,23 @@ function App() {
 
   // Функция для отправки токена в Telegram
   const sendAuthToTelegram = (token) => {
+    console.log("Attempting to send auth data to Telegram");
+    console.log("Token:", token);
+    console.log("Telegram WebApp available:", !!window.Telegram?.WebApp);
+    
     if (window.Telegram?.WebApp) {
       try {
-        window.Telegram.WebApp.sendData(
-          JSON.stringify({ token, action: "auth" })
-        );
-        alert("Auth data sent to Telegram: " + token); // Используем alert
+        const data = JSON.stringify({ token, action: "auth" });
+        console.log("Sending data to Telegram:", data);
+        window.Telegram.WebApp.sendData(data);
+        console.log("Auth data sent to Telegram successfully");
       } catch (error) {
-        alert("Error sending auth data to Telegram: " + error.message); // Используем alert для ошибок
+        console.error("Error sending auth data to Telegram:", error);
+        console.error("Error details:", error.message);
+        toast.error("Ошибка отправки данных в Telegram");
       }
     } else {
-      alert("Telegram Web App not available during auth send."); // Используем alert
+      console.warn("Telegram Web App not available");
     }
   };
 
@@ -66,7 +72,7 @@ function App() {
         console.log("Auth status changed:", authStatus);
         setIsAuthenticated(authStatus);
         if (authStatus && token) {
-          sendAuthToTelegram(token); // Отправка токена при входе
+          sendAuthToTelegram(token);
         }
       }
     };
@@ -84,22 +90,30 @@ function App() {
   }, [isAuthenticated]);
 
   // Инициализация Telegram Web App
-    useEffect(() => {
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
-        alert("Telegram Web App initialized"); // Используем alert
-        window.Telegram.WebApp.MainButton
-          .setText("Закрыть")
-          .onClick(() => {
-            window.Telegram.WebApp.sendData(JSON.stringify({ action: "close" }));
-            window.Telegram.WebApp.close();
-          })
-          .show();
-      } else {
-        alert("Telegram Web App not available. Ensure the app is opened via Telegram."); // Используем alert
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+      console.log("Telegram Web App initialized");
+      
+      // Настройка кнопки закрытия
+      window.Telegram.WebApp.MainButton
+        .setText("Закрыть")
+        .onClick(() => {
+          window.Telegram.WebApp.sendData(JSON.stringify({ action: "close" }));
+          window.Telegram.WebApp.close();
+        })
+        .show();
+
+      // Если есть токен, отправляем его
+      const token = localStorage.getItem("token");
+      if (token) {
+        sendAuthToTelegram(token);
       }
-    }, []);
+    } else {
+      console.warn("Telegram Web App not available. Ensure the app is opened via Telegram.");
+    }
+  }, []);
 
   // Функция выхода из системы
   const handleLogout = () => {
@@ -116,6 +130,7 @@ function App() {
         window.Telegram.WebApp.close();
       } catch (error) {
         console.error("Error sending logout data:", error);
+        toast.error("Ошибка при выходе из системы");
       }
     }
   };
