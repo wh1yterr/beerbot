@@ -80,9 +80,5 @@ app.use((err, req, res, next) => {
 });
 
 // Запуск сервера
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log(`Server running on port ${PORT} at`, new Date().toISOString()));
-}
-
-module.exports = app;
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT} at`, new Date().toISOString()));
