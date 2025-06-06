@@ -10,7 +10,7 @@ const app = express();
 
 // Настройка CORS
 const corsOptions = {
-  origin: ['https://beerbot-hazel.vercel.app', 'http://localhost:3000'],
+  origin: ['https://beerbotfronty.vercel.app/login', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
