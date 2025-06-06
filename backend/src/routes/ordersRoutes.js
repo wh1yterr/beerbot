@@ -113,9 +113,9 @@ module.exports = (pool) => {
   });
 
   // Получение заказа по order_code
-  router.get('/code/:orderCode', async (req, res) => {
+  router.get('/code/:code', async (req, res) => {
     try {
-      const { orderCode } = req.params;
+      const { code } = req.params;
       const result = await pool.query(
         `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status, o.order_code,
                 json_agg(
@@ -132,7 +132,7 @@ module.exports = (pool) => {
          WHERE o.order_code = $1
          GROUP BY o.id, o.user_id, o.total_price, o.created_at, o.status, o.order_code
          ORDER BY o.created_at DESC`,
-        [orderCode.toUpperCase()]
+        [code.toUpperCase()]
       );
 
       if (result.rows.length === 0) {
