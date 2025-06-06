@@ -1,6 +1,9 @@
 const express = require('express');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
 
 module.exports = (pool) => {
   const router = express.Router();
@@ -205,6 +208,34 @@ module.exports = (pool) => {
       if (result.rowCount === 0) {
         return res.status(404).json({ message: 'Заказ не найден' });
       }
+
+      // === Уведомление пользователей через Telegram ===
+      try {
+        // 1. Получить order_code по orderId
+        const orderResult = await pool.query('SELECT order_code FROM orders WHERE id = $1', [orderId]);
+        const order_code = orderResult.rows[0]?.order_code;
+        if (order_code) {
+          // 2. Прочитать user_orders.json
+          const userOrdersPath = path.join(__dirname, '../../../user_orders.json');
+          if (fs.existsSync(userOrdersPath)) {
+            const userOrders = JSON.parse(fs.readFileSync(userOrdersPath, 'utf-8'));
+            // 3. Найти всех user_id, у кого есть этот order_code
+            const notifiedUsers = Object.entries(userOrders)
+              .filter(([userId, codes]) => codes.includes(order_code))
+              .map(([userId]) => userId);
+            // 4. Отправить уведомление через Telegram Bot API
+            for (const userId of notifiedUsers) {
+              await axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
+                chat_id: userId,
+                text: `Статус вашего заказа ${order_code} изменён! Новый статус: ${status}`
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Ошибка при отправке уведомлений:', e);
+      }
+      // === Конец уведомления ===
 
       console.log('Статус обновлён:', result.rows[0]);
       res.json({ message: 'Статус заказа обновлён', order: result.rows[0] });
