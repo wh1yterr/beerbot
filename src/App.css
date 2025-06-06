@@ -40,9 +40,7 @@
   }
 }
 
-body{
-  height: 2000px;
-}
+
 
 main.flex-grow-1 {
   flex: 1 0 auto;
